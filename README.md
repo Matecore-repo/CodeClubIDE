@@ -8,6 +8,13 @@ IDE de IA offline-first. BYOK — conectá tu propia API key. Sin suscripción, 
 [AGPLv3](LICENSE) — Free personal/educational · Gratis personal/educativo | Commercial license · Licencia comercial
 [www.codeclubide.com](https://www.codeclubide.com) · [Donate / Donar](https://ko-fi.com/codeclubide)
 
+![License](https://img.shields.io/badge/license-AGPLv3-blue?style=flat)
+![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat)
+![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat)
+![Platform](https://img.shields.io/badge/platform-Win%20%7C%20Mac%20%7C%20Linux-lightgrey?style=flat)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+[![Donate](https://img.shields.io/badge/donate-Ko--fi-FF5E5B?style=flat&logo=kofi)](https://ko-fi.com/codeclubide)
+
 ---
 
 ## Quick Start / Inicio Rápido
@@ -77,6 +84,19 @@ npm run package:mac  # Package for macOS
 
 All AI traffic goes directly from your device to the configured provider. codeclub does not proxy, log, or store any requests or responses.
 Todo el tráfico de IA va directo de tu dispositivo al proveedor. codeclub no proxy, no loguea ni almacena nada.
+
+## Rules of the Club / Reglas del Club
+
+| # | English | Español |
+|---|---------|---------|
+| 1 | Nobody talks about the editor. | Nadie habla del editor. |
+| 2 | Nobody talks about the editor! If it has no owner, it has no name. | ¡Nadie habla del editor! Si no tiene dueño, no tiene nombre. |
+| 3 | Dead code is a corpse. Nobody keeps corpses. | El código muerto es un cadáver. Nadie guarda cadáveres. |
+| 4 | In a debugging session, only two: you and the bug. One leaves. | En una depuración solo dos: tú y el bug. Uno fuera. |
+| 5 | One problem at a time. Busy isn't productive, it's scattered. | Un solo problema a la vez. Estar ocupado no te hace productivo, te hace disperso. |
+| 6 | You enter the terminal with no history and no past. | Entras a la terminal sin historia ni pasado. |
+| 7 | The debugging takes as long as it has to take. | El debugging durará lo que tenga que durar. |
+| 8 | First night at Code Club? Open the editor and tame the silicon beast. | ¿Primera noche en el Code Club? Abrís el editor y domás a la bestia de silicio. |
 
 ## Licensing / Licencia
 

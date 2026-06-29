@@ -1,0 +1,17 @@
+1. First rule of Code Club: Nobody talks about the editor.
+
+2. Second rule of Code Club: NOBODY TALKS ABOUT THE EDITOR! If the editor has no owner, it has no name.
+
+3. Third rule of Code Club: Dead code is a corpse. Nobody keeps corpses.
+
+4. Fourth rule of Code Club: Only two people participate in a debugging session: you and the bug. One leaves.
+
+5. Fifth rule of Code Club: One problem at a time. Being busy doesn't make you productive, it makes you scattered.
+
+6. Sixth rule of Code Club: You enter the terminal with no history and no past.
+
+7. Seventh rule: The debugging takes as long as it has to take.
+
+8. Eighth and final rule: If this is your first night at Code Club... you open the editor and you tame the silicon beast.
+
+If this is too much for you, stay out of the club.
