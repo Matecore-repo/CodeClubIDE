@@ -1,0 +1,96 @@
+{
+  "name": "@matecore/codeclub",
+  "version": "1.0.0",
+  "description": "Code Club - Offline-first AI development environment",
+  "license": "SEE LICENSE IN LICENSE",
+  "author": {
+    "name": "Ignacio Agustin Angelone",
+    "email": "iangel.oned@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Matecore-repo/CodeClubIDE.git"
+  },
+  "main": "./out/main/index.cjs",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "scripts": {
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "build:wasm": "cd src/wasm-renderer && wasm-pack build --target web --out-dir pkg",
+    "check": "vp check",
+    "dev": "node scripts/dev.mjs",
+    "build": "vp build && vp pack && electron scripts/compile-bytenode.mjs && javascript-obfuscator out/renderer/assets --output out/renderer/assets && javascript-obfuscator out/preload --output out/preload && node scripts/add-banner.mjs",
+    "preview": "vp preview",
+    "postinstall": "electron-builder install-app-deps",
+    "package": "electron-builder --config electron-builder.config.ts",
+    "package:mac": "electron-builder --config electron-builder.config.ts --mac",
+    "package:win": "electron-builder --config electron-builder.config.ts --win",
+    "package:linux": "electron-builder --config electron-builder.config.ts --linux",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test": "vp test",
+    "test:ast-agent": "node testing/tools/e2e.mjs",
+    "test:ide-tools": "vitest run testing/tools/ide-tools.e2e.test.ts",
+    "test:graph": "vitest run tests/topographic_graph.test.ts tests/structural_identity.test.ts src/main/indexer/workspaceIndex.test.ts",
+    "benchmark:topographic-lifecycle": "vitest run tests/topographic_lifecycle.ai.test.ts",
+    "test:watch": "vp test watch"
+  },
+  "dependencies": {
+    "3d-force-graph": "^1.80.0",
+    "@anthropic-ai/sdk": "^0.105.0",
+    "@electron-toolkit/utils": "^4.0.0",
+    "@google/genai": "^2.9.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@monaco-editor/react": "^4.7.0",
+    "@open-pencil/core": "^0.13.2",
+    "@types/canvaskit-wasm": "^0.18.0",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/addon-web-links": "^0.12.0",
+    "@xterm/xterm": "^6.0.0",
+    "bytenode": "^1.6.0",
+    "canvaskit-wasm": "^0.41.1",
+    "d3-force-3d": "^3.0.5",
+    "dompurify": "^3.4.11",
+    "electron-updater": "^6.8.9",
+    "gpt-tokenizer": "^3.4.0",
+    "minimatch": "^10.2.5",
+    "node-pty": "^1.1.0",
+    "openai": "^6.42.0",
+    "rbush": "^4.0.1",
+    "three": "^0.184.0",
+    "v8-compile-cache": "^2.4.0",
+    "ws": "^8.21.0",
+    "yoga-layout": "^3.2.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/rbush": "^4.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.184.1",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^4.0.0",
+    "dotenv": "^17.4.2",
+    "electron": "^41.0.0",
+    "electron-builder": "^26.0.0",
+    "javascript-obfuscator": "^5.4.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.6.0",
+    "vite-plugin-javascript-obfuscator": "^3.1.0",
+    "vite-plus": "latest"
+  },
+  "overrides": {
+    "dompurify": "$dompurify"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "npm",
+      "version": "11.17.0",
+      "onFail": "warn"
+    }
+  }
+}

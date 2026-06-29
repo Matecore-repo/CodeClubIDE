@@ -1,0 +1,11 @@
+*.pdb
+__pycache__/
+node_modules/
+rust-engine/target/
+src/wasm-renderer/target/
+out/
+dist/
+*.log
+*.env*
+.DS_Store
+Thumbs.db

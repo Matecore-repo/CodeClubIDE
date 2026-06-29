@@ -1,0 +1,193 @@
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0 solid;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html {
+  line-height: var(--line-height-large);
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+  font-family: var(--font-family-sans);
+  font-feature-settings: normal;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--background-base);
+  color: var(--text-strong);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-large);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  font-feature-settings: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  border-radius: 0;
+  background-color: transparent;
+}
+
+button {
+  cursor: pointer;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+ol,
+ul {
+  list-style: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+code,
+pre {
+  font-family: var(--font-family-mono);
+  font-size: 1em;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+*::-webkit-scrollbar-track {
+  display: none !important;
+}
+
+*::-webkit-scrollbar-thumb {
+  display: none !important;
+}
+
+::placeholder {
+  color: var(--text-weaker);
+}
+
+.monaco-editor .scrollbar .slider {
+  background: #1a1a1a !important;
+  border-radius: 4px !important;
+  border: none !important;
+}
+.monaco-editor .scrollbar .slider:hover {
+  background: #222222 !important;
+}
+.monaco-editor .scrollbar {
+  background: transparent !important;
+}
+
+.xterm,
+.xterm-viewport,
+.xterm-screen {
+  scrollbar-width: none !important;
+}
+
+.xterm-viewport {
+  overflow: hidden !important;
+}
+
+.xterm-viewport::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.workspace-table-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a40 #151516;
+}
+
+.workspace-table-scroll::-webkit-scrollbar,
+.workspace-table-scroll *::-webkit-scrollbar {
+  display: block !important;
+  width: 10px !important;
+  height: 10px !important;
+}
+
+.workspace-table-scroll::-webkit-scrollbar-track,
+.workspace-table-scroll *::-webkit-scrollbar-track {
+  display: block !important;
+  background: #151516;
+}
+
+.workspace-table-scroll::-webkit-scrollbar-thumb,
+.workspace-table-scroll *::-webkit-scrollbar-thumb {
+  display: block !important;
+  background: #3a3a40;
+  border: 2px solid #151516;
+  border-radius: 999px;
+}
+
+.workspace-table-scroll::-webkit-scrollbar-thumb:hover,
+.workspace-table-scroll *::-webkit-scrollbar-thumb:hover {
+  background: #4a4a52;
+}
+
+.workspace-table-scroll::-webkit-scrollbar-corner,
+.workspace-table-scroll *::-webkit-scrollbar-corner {
+  background: #151516;
+}
+
+/* Hide Monaco Find Widget completely since we use ChatInput search */
+.monaco-editor .find-widget {
+  display: none !important;
+}
+
+.monaco-editor .find-widget .monaco-inputbox {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 4px !important;
+}
+
+.monaco-editor .find-widget .monaco-inputbox.synthetic-focus {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  outline: none !important;
+}
+
+.monaco-editor .find-widget .button {
+  border-radius: 4px !important;
+}
+
+.monaco-editor .find-widget .monaco-checkbox {
+  border-radius: 4px !important;
+}
+
+.chat-scroll {
+  scrollbar-width: thin !important;
+  scrollbar-color: #1a1a1a transparent !important;
+}

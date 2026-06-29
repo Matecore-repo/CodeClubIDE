@@ -1,0 +1,17 @@
+1. Primera regla del Code Club es: Nadie habla del editor.
+
+2. Segunda regla del Code Club es: ¡NADIE HABLA DEL EDITOR! Si el editor no tiene dueño, no tiene nombre.
+
+3. Tercera regla del Code Club es: El código muerto es un cadáver. Nadie guarda cadáveres.
+
+4. Cuarta regla del Code Club es: En una sesión de depuración solo participan dos: tú y el bug. Uno fuera.
+
+5. Quinta regla del Code Club es: Un solo problema a la vez. Estar ocupado no te hace productivo, te hace disperso.
+
+6. Sexta regla del Code Club es: Entras a la terminal sin historia ni pasado.
+
+7. Séptima regla: El debugging durará lo que tenga que durar.
+
+8. Octava y última regla es: Si es tu primera noche en el Code Club... abrís el editor y domás a la bestia de silicio.
+
+Si esto te queda grande, quédate afuera del club.
