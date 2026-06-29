@@ -29,6 +29,7 @@ import {
   readTopographicContent,
 } from "./fs/topographic";
 import { ensureTopographicCache } from "./fs/graphCache";
+import { ipcWarn, normalizeIpcPath } from "./validation";
 
 function decomposeFileToSections(filePath: string, content: string): StructuralNode[] {
   const lines = content.split("\n");
@@ -258,28 +259,27 @@ export function registerFsHandlers(): void {
   ipcMain.handle("fs:readFileBase64", (_event, filePath: string) => {
     let finalPath = filePath;
     try {
+      if (typeof filePath !== "string" || !filePath.trim() || filePath.includes("\0")) return null;
       if (filePath.startsWith("resources/") || filePath.startsWith("resources\\")) {
         finalPath = app.isPackaged
           ? join(process.resourcesPath, filePath)
           : join(process.cwd(), filePath);
+      } else {
+        finalPath = normalizeIpcPath(filePath, "filePath");
       }
       return readFileSync(finalPath).toString("base64");
     } catch (e: any) {
-      try {
-        require("fs").appendFileSync(
-          "C:\\Users\\iange\\codeclubDebug.txt",
-          finalPath + " -> " + e.message + "\n",
-        );
-      } catch {}
+      ipcWarn("fs:readFileBase64", e);
       return null;
     }
   });
 
   ipcMain.handle("fs:copyFile", (_event, src: string, dest: string) => {
     try {
-      cpSync(src, dest, { recursive: true });
+      cpSync(normalizeIpcPath(src, "src"), normalizeIpcPath(dest, "dest"), { recursive: true });
       return true;
-    } catch {
+    } catch (error) {
+      ipcWarn("fs:copyFile", error);
       return false;
     }
   });
@@ -447,44 +447,49 @@ export function registerFsHandlers(): void {
 
   ipcMain.handle("fs:createFile", (_event, filePath: string) => {
     try {
-      writeFileSync(filePath, "", "utf-8");
+      writeFileSync(normalizeIpcPath(filePath, "filePath"), "", "utf-8");
       return true;
-    } catch {
+    } catch (error) {
+      ipcWarn("fs:createFile", error);
       return false;
     }
   });
 
   ipcMain.handle("fs:createDir", (_event, dirPath: string) => {
     try {
-      mkdirSync(dirPath, { recursive: true });
+      mkdirSync(normalizeIpcPath(dirPath, "dirPath"), { recursive: true });
       return true;
-    } catch {
+    } catch (error) {
+      ipcWarn("fs:createDir", error);
       return false;
     }
   });
 
   ipcMain.handle("fs:rename", (_event, oldPath: string, newPath: string) => {
     try {
-      renameSync(oldPath, newPath);
+      renameSync(normalizeIpcPath(oldPath, "oldPath"), normalizeIpcPath(newPath, "newPath"));
       return true;
-    } catch {
+    } catch (error) {
+      ipcWarn("fs:rename", error);
       return false;
     }
   });
 
   ipcMain.handle("fs:delete", async (_event, targetPath: string) => {
     try {
+      const safeTarget = normalizeIpcPath(targetPath, "targetPath");
       const binaryPath = getScanBinaryPath();
       if (!existsSync(binaryPath)) {
-        rmSync(targetPath, { recursive: true, force: true });
+        rmSync(safeTarget, { recursive: true, force: true });
         return true;
       }
       return new Promise<boolean>((resolve) => {
-        execFile(binaryPath, ["io", "delete-file", targetPath], (error) => {
+        execFile(binaryPath, ["io", "delete-file", safeTarget], (error) => {
           resolve(!error);
         });
       });
-    } catch {
+    } catch (error) {
+      ipcWarn("fs:delete", error);
       return false;
     }
   });
@@ -528,8 +533,9 @@ export function registerFsHandlers(): void {
 
   ipcMain.handle("fs:exists", (_event, targetPath: string) => {
     try {
-      return existsSync(targetPath);
-    } catch {
+      return existsSync(normalizeIpcPath(targetPath, "targetPath"));
+    } catch (error) {
+      ipcWarn("fs:exists", error);
       return false;
     }
   });
