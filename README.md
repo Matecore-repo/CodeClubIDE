@@ -87,7 +87,7 @@ Todo el tráfico de IA va directo de tu dispositivo al proveedor. codeclub no pr
 
 - Full text in [LICENSE](LICENSE) / Texto completo en [LICENSE](LICENSE).
 - Commercial inquiries / Consultas comerciales: **iangel.oned@gmail.com**
-- CLA required for contributions. See [CONTRIBUTING.md](CONTRIBUTING.md). / CLA requerido para contribuir.
+- DCO sign-off required for contributions. See [CONTRIBUTING.md](CONTRIBUTING.md). / DCO sign-off requerido para contribuir.
 
 ## Intellectual Property / Propiedad Intelectual
 

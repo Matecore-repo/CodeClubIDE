@@ -40,7 +40,7 @@ Dual model / modelo dual:
 
 - See [LICENSE](LICENSE) / Ver [LICENSE](LICENSE).
 - Commercial inquiries / Consultas comerciales: **iangel.oned@gmail.com**
-- CLA required for PRs. See [CONTRIBUTING.md](CONTRIBUTING.md). / CLA requerido para PRs.
+- DCO sign-off required for contributions. See [CONTRIBUTING.md](CONTRIBUTING.md). / DCO sign-off requerido para contribuir.
 
 ## Rules
 

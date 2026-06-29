@@ -1,32 +1,58 @@
 # Contributing to codeclub / Contribuir a codeclub
 
-## Contributor License Agreement (CLA)
+## Developer Certificate of Origin (DCO)
 
 **English:**
 
-Before we can accept any pull request, you must sign a Contributor License Agreement (CLA). This is a legal document that grants the project maintainer (Ignacio Agustin Angelone) the right to relicense your contributions under the AGPLv3 and/or a commercial license. This is necessary to maintain the dual-licensing model.
+In lieu of a formal Contributor License Agreement, this project uses the **Developer Certificate of Origin (DCO)**. By signing off each commit, you confirm ownership and grant the project the right to relicense your contribution under AGPLv3 and/or a commercial license. This is necessary to maintain the dual-licensing model.
 
-By submitting a pull request, you confirm that:
-
-1. You own the copyright to the code you are contributing.
-2. You grant Ignacio Agustin Angelone a perpetual, worldwide, non-exclusive, royalty-free license to use, reproduce, modify, and distribute your contribution under both the AGPLv3 and a separate commercial license.
-3. You are not submitting code that violates any third-party rights or licenses.
-
-To sign the CLA, add your name and email to the `CLA-SIGNATURES.md` file in your pull request, or email a signed copy to **iangel.oned@gmail.com**.
+To sign off, use `git commit -s` or add `Signed-off-by: Your Name <your@email.com>` at the end of your commit message.
 
 ---
 
 **Español:**
 
-Antes de que podamos aceptar cualquier pull request, debes firmar un Acuerdo de Licencia de Contribuidor (CLA). Este es un documento legal que otorga al mantenedor del proyecto (Ignacio Agustin Angelone) el derecho de relicenciar tus contribuciones bajo AGPLv3 y/o una licencia comercial. Esto es necesario para mantener el modelo de licencia dual.
+En lugar de un Acuerdo de Licencia de Contribuidor formal, este proyecto usa el **Developer Certificate of Origin (DCO)**. Al firmar cada commit, confirmás la titularidad del código y otorgás al proyecto el derecho de relicenciar tu contribución bajo AGPLv3 y/o licencia comercial. Esto es necesario para mantener el modelo de licencia dual.
 
-Al enviar un pull request, confirmás que:
+Para firmar, usá `git commit -s` o agregá `Signed-off-by: Tu Nombre <tu@email.com>` al final de tu mensaje de commit.
 
-1. Sos titular del copyright del código que estás contribuyendo.
-2. Otorgás a Ignacio Agustin Angelone una licencia perpetua, mundial, no exclusiva y libre de regalías para usar, reproducir, modificar y distribuir tu contribución tanto bajo AGPLv3 como bajo una licencia comercial separada.
-3. No estás enviando código que viole derechos de terceros o licencias existentes.
+---
 
-Para firmar el CLA, agregá tu nombre y email al archivo `CLA-SIGNATURES.md` en tu pull request, o enviá una copia firmada a **iangel.oned@gmail.com**.
+### DCO Full Text / Texto Completo
+
+```
+Developer Certificate of Origin
+Version 1.1
+
+Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
+
+Everyone is permitted to copy and distribute verbatim copies of this
+license document, but changing it is not allowed.
+
+By making a contribution to this project, I certify that:
+
+(a) The contribution was created in whole or in part by me and I
+    have the right to submit it under the open source license
+    indicated in the file; or
+
+(b) The contribution is based upon previous work that, to the best
+    of my knowledge, is covered under an appropriate open source
+    license and I have the right under that license to submit that
+    work with modifications, whether created in whole or in part
+    by me, under the same open source license (unless I am
+    permitted to submit under a different license), as indicated
+    in the file; or
+
+(c) The contribution was provided directly to me by some other
+    person who certified (a), (b) or (c) and I have not modified
+    it.
+
+(d) I understand and agree that this project and the contribution
+    are public and that a record of the contribution (including all
+    personal information I submit with it, including my sign-off) is
+    maintained indefinitely and may be redistributed consistent with
+    this project or the open source license(s) involved.
+```
 
 ---
 
@@ -38,7 +64,7 @@ Para firmar el CLA, agregá tu nombre y email al archivo `CLA-SIGNATURES.md` en 
 2. Create a feature branch: `git checkout -b feature/my-feature`
 3. Make your changes. Follow the existing code style.
 4. Run `npm run typecheck` and ensure it passes.
-5. Sign the CLA (see above).
+5. Commit with sign-off: `git commit -s -m "Description of change"`
 6. Submit a pull request.
 
 ### Español
@@ -47,7 +73,7 @@ Para firmar el CLA, agregá tu nombre y email al archivo `CLA-SIGNATURES.md` en 
 2. Creá una rama de feature: `git checkout -b feature/mi-feature`
 3. Hacé tus cambios. Seguí el estilo de código existente.
 4. Ejecutá `npm run typecheck` y asegurate de que pase.
-5. Firmá el CLA (ver arriba).
+5. Commit con sign-off: `git commit -s -m "Descripción del cambio"`
 6. Enviá un pull request.
 
 ---
