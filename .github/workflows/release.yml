@@ -30,8 +30,8 @@ jobs:
       - name: Install Node Dependencies
         run: npm install
 
-      - name: Fix Vite Worker Source Map
-        run: rm -f node_modules/@open-pencil/core/dist/kiwi/fig/parse/worker.js.map || true
+      - name: Fix Vite Worker Issue
+        run: touch node_modules/@open-pencil/core/dist/kiwi/fig/parse/worker.ts || true
 
       - name: Build Application
         run: npm run build
