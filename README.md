@@ -20,8 +20,8 @@ IDE de IA offline-first. BYOK — conectá tu propia API key. Sin suscripción, 
 ## Quick Start / Inicio Rápido
 
 ```bash
-npm install
-npm run dev
+vp install
+vp run dev
 ```
 
 ## Requirements / Requisitos
@@ -71,13 +71,13 @@ Vector design tool. Layers, shapes, freehand drawing, text, fills, strokes, shad
 ## Development / Desarrollo
 
 ```bash
-npm run dev          # Start with HMR
-npm run build        # Build for production
-npm run typecheck    # TypeScript validation
-npm run test         # Run tests
-npm run package:win  # Package for Windows
-npm run package:linux # Package for Linux (AppImage, deb, rpm)
-npm run package:mac  # Package for macOS
+vp run dev           # Start with HMR
+vp run build         # Build for production
+vp check             # Format, lint & TypeScript validation
+vp test              # Run tests
+vp run package:win   # Package for Windows
+vp run package:linux # Package for Linux (AppImage, deb, rpm)
+vp run package:mac   # Package for macOS
 ```
 
 ## Privacy / Privacidad
