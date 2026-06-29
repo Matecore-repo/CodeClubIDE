@@ -143,15 +143,28 @@ export function getHardcodedModels(providerId: string): ModelInfo[] | null {
 }
 
 export function providerFromUrl(baseUrl: string): string {
-  if (baseUrl.includes("11434")) return "ollama";
-  if (baseUrl.includes("1234")) return "lmstudio";
-  if (baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1")) return "ollama";
-  if (baseUrl.includes("anthropic.com")) return "anthropic";
-  if (baseUrl.includes("googleapis.com")) return "google";
-  if (baseUrl.includes("openai.com")) return "openai";
-  if (baseUrl.includes("opencode.ai/zen/go") || baseUrl.includes("opencode.ai/go"))
-    return "opencode-go";
-  if (baseUrl.includes("opencode.ai/zen")) return "opencode-zen";
+  let url: URL;
+  try {
+    url = new URL(baseUrl);
+  } catch {
+    // fallback for non-URL strings (e.g. bare hostname:port)
+    if (baseUrl.includes("11434")) return "ollama";
+    if (baseUrl.includes("1234")) return "lmstudio";
+    return "custom";
+  }
+
+  const { hostname, port, pathname } = url;
+
+  if (port === "11434") return "ollama";
+  if (port === "1234") return "lmstudio";
+  if (hostname === "localhost" || hostname === "127.0.0.1") return "ollama";
+  if (hostname === "anthropic.com" || hostname.endsWith(".anthropic.com")) return "anthropic";
+  if (hostname === "googleapis.com" || hostname.endsWith(".googleapis.com")) return "google";
+  if (hostname === "openai.com" || hostname.endsWith(".openai.com")) return "openai";
+  if (hostname === "opencode.ai" || hostname.endsWith(".opencode.ai")) {
+    if (pathname.includes("/zen/go") || pathname.includes("/go")) return "opencode-go";
+    if (pathname.includes("/zen")) return "opencode-zen";
+  }
   return "custom";
 }
 

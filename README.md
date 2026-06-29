@@ -87,16 +87,16 @@ Todo el tráfico de IA va directo de tu dispositivo al proveedor. codeclub no pr
 
 ## Rules of the Club / Reglas del Club
 
-| # | English | Español |
-|---|---------|---------|
-| 1 | Nobody talks about the editor. | Nadie habla del editor. |
-| 2 | Nobody talks about the editor! If it has no owner, it has no name. | ¡Nadie habla del editor! Si no tiene dueño, no tiene nombre. |
-| 3 | Dead code is a corpse. Nobody keeps corpses. | El código muerto es un cadáver. Nadie guarda cadáveres. |
-| 4 | In a debugging session, only two: you and the bug. One leaves. | En una depuración solo dos: tú y el bug. Uno fuera. |
-| 5 | One problem at a time. Busy isn't productive, it's scattered. | Un solo problema a la vez. Estar ocupado no te hace productivo, te hace disperso. |
-| 6 | You enter the terminal with no history and no past. | Entras a la terminal sin historia ni pasado. |
-| 7 | The debugging takes as long as it has to take. | El debugging durará lo que tenga que durar. |
-| 8 | First night at Code Club? Open the editor and tame the silicon beast. | ¿Primera noche en el Code Club? Abrís el editor y domás a la bestia de silicio. |
+| #   | English                                                               | Español                                                                           |
+| --- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| 1   | Nobody talks about the editor.                                        | Nadie habla del editor.                                                           |
+| 2   | Nobody talks about the editor! If it has no owner, it has no name.    | ¡Nadie habla del editor! Si no tiene dueño, no tiene nombre.                      |
+| 3   | Dead code is a corpse. Nobody keeps corpses.                          | El código muerto es un cadáver. Nadie guarda cadáveres.                           |
+| 4   | In a debugging session, only two: you and the bug. One leaves.        | En una depuración solo dos: tú y el bug. Uno fuera.                               |
+| 5   | One problem at a time. Busy isn't productive, it's scattered.         | Un solo problema a la vez. Estar ocupado no te hace productivo, te hace disperso. |
+| 6   | You enter the terminal with no history and no past.                   | Entras a la terminal sin historia ni pasado.                                      |
+| 7   | The debugging takes as long as it has to take.                        | El debugging durará lo que tenga que durar.                                       |
+| 8   | First night at Code Club? Open the editor and tame the silicon beast. | ¿Primera noche en el Code Club? Abrís el editor y domás a la bestia de silicio.   |
 
 ## Licensing / Licencia
 
