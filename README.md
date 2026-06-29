@@ -1,4 +1,4 @@
-# codeclub
+# Code Club IDE
 
 > **Ignacio Agustin Angelone · Argentina**
 
