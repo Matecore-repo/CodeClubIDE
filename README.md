@@ -6,7 +6,7 @@ Offline-first AI IDE. BYOK — connect your own API key. No subscription, no tel
 IDE de IA offline-first. BYOK — conectá tu propia API key. Sin suscripción, sin telemetría, sin nube.
 
 [AGPLv3](LICENSE) — Free personal/educational · Gratis personal/educativo | Commercial license · Licencia comercial
-[www.codeclubide.com](https://www.codeclubide.com)
+[www.codeclubide.com](https://www.codeclubide.com) · [Donate / Donar](https://ko-fi.com/codeclubide)
 
 ---
 
