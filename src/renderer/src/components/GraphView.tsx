@@ -49,7 +49,7 @@ function composeGraph(
 
   // We use topographic as the structural base so ALL files/folders/symbols are visible.
   for (const node of topographic) {
-    let kind = node.type;
+    let kind: string = node.type;
     let id = node.id;
     
     // Match architecture graph IDs for files

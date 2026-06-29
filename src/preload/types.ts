@@ -1,14 +1,20 @@
 export interface GraphNode {
   id: string;
   path: string;
-  kind: "file" | "dir" | "root";
+  kind: string;
   size: number;
   fileType: string;
+  inDegree?: number;
+  isCycleNode?: boolean;
+  name?: string;
+  startLine?: number;
+  endLine?: number;
 }
 
 export interface GraphEdge {
   source: string;
   target: string;
+  structural?: boolean;
 }
 
 export interface GraphData {
