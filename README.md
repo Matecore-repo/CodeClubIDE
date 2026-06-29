@@ -49,6 +49,12 @@ vp run dev
 
 ## Modes / Modos
 
+## Product Boundaries / Límites del producto
+
+Code Club IDE is intentionally split into three bounded modes, not one mixed surface. Coding Mode is the core IDE, Studio Mode is a local table-based project workspace, and Design Mode is a lightweight vector design tool. Each mode has its own data model, workflow, and responsibility.
+
+Code Club IDE está dividido intencionalmente en tres modos con límites claros, no en una sola superficie mezclada. Modo Código es el IDE principal, Modo Studio es un espacio local de gestión basado en tablas, y Modo Diseño es una herramienta liviana de diseño vectorial. Cada modo tiene su propio modelo de datos, flujo de trabajo y responsabilidad.
+
 **Coding Mode / Modo Código**
 Standard IDE. File explorer, Monaco editor (same engine as VS Code), integrated terminal (PowerShell, WSL, Git Bash), AI agent panel. Multi-chat sessions, sandbox safety mode, checkpoints with rollback, split layouts (single, 2-col, 4-quadrant).
 
@@ -97,6 +103,14 @@ Todo el tráfico de IA va directo de tu dispositivo al proveedor. codeclub no pr
 | 6   | You enter the terminal with no history and no past.                   | Entras a la terminal sin historia ni pasado.                                      |
 | 7   | The debugging takes as long as it has to take.                        | El debugging durará lo que tenga que durar.                                       |
 | 8   | First night at Code Club? Open the editor and tame the silicon beast. | ¿Primera noche en el Code Club? Abrís el editor y domás a la bestia de silicio.   |
+
+## Contributors / Colaboradores
+
+Thanks to everyone helping build Code Club IDE. / Gracias a todas las personas que ayudan a construir Code Club IDE.
+
+<a href="https://github.com/Matecore-repo/CodeClubIDE/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Matecore-repo/CodeClubIDE" alt="Contributors / Colaboradores" />
+</a>
 
 ## Licensing / Licencia
 
