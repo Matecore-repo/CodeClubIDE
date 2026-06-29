@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from "
 import { join } from "path";
 import { app } from "electron";
 import type { IndexMeta, IndexChunk, IndexStatus } from "./types";
+import { saveSymbolStore } from "./graphStore";
 
 export const INDEX_VERSION = 4;
 
@@ -57,6 +58,7 @@ export function loadMeta(workspacePath: string): IndexMeta | null {
 
 export function saveMeta(meta: IndexMeta): void {
   atomicWrite(getMetaPath(meta.workspacePath), JSON.stringify(meta, null, 2));
+  saveSymbolStore(meta.workspacePath, meta.chunks);
 }
 
 export function loadEmbeddings(workspacePath: string, _embedDim: number): Float32Array | null {

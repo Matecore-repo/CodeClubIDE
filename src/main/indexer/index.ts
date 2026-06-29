@@ -20,6 +20,7 @@ import { search as cosineSearch } from "./searcher";
 import { startWatching, stopWatching } from "./watcher";
 import { scanWorkspace, searchHybrid } from "./scanner";
 import { initCache, onFileChanged } from "../ipc/fs/graphCache";
+import { importGraphSnapshotIfMissing } from "./graphStore";
 
 let currentWorkspace: string | null = null;
 let indexQueue: string[] = [];
@@ -49,7 +50,11 @@ export function openWorkspace(workspacePath: string): void {
   currentWorkspace = workspacePath;
   setEmbedderWorkspace(workspacePath);
 
-  initCache(workspacePath).catch((err) => console.error("[indexer] initCache failed:", err));
+  importGraphSnapshotIfMissing(workspacePath)
+    .catch((err) => console.error("[indexer] importGraphSnapshotIfMissing failed:", err))
+    .finally(() =>
+      initCache(workspacePath).catch((err) => console.error("[indexer] initCache failed:", err)),
+    );
 
   const meta = loadMeta(workspacePath);
   ensureIdeMarker(workspacePath);

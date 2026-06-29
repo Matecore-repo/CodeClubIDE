@@ -63,6 +63,7 @@ function createChunk(
   kind = "section",
   name?: string,
   imports?: string[],
+  outboundCalls?: string[],
 ): IndexChunk {
   return {
     id: structuralNodeId(
@@ -77,8 +78,31 @@ function createChunk(
     kind,
     name,
     imports: imports && imports.length > 0 ? imports : undefined,
+    outboundCalls: outboundCalls && outboundCalls.length > 0 ? outboundCalls : undefined,
     hash: semanticNodeHash(code),
   };
+}
+
+function extractCalls(code: string): string[] {
+  const calls = new Set<string>();
+  const ignored = new Set([
+    "if",
+    "for",
+    "while",
+    "switch",
+    "catch",
+    "function",
+    "return",
+    "typeof",
+    "new",
+  ]);
+  const callRegex = /\b([A-Za-z_$][\w$]*)\s*\(/g;
+  let match: RegExpExecArray | null;
+  while ((match = callRegex.exec(code)) !== null) {
+    const name = match[1];
+    if (!ignored.has(name)) calls.add(name);
+  }
+  return Array.from(calls);
 }
 
 export async function chunkFile(filePath: string, workspaceRoot: string): Promise<IndexChunk[]> {
@@ -120,6 +144,7 @@ function chunkNamedSections(
           "section",
           match[2].trim().slice(0, 40),
           imports,
+          extractCalls(code),
         ),
       );
     }
@@ -129,7 +154,18 @@ function chunkNamedSections(
       if (!match) continue;
       const end = findNext(lines, i + 1, /^["']?([A-Za-z0-9_.-]+)["']?\s*[:=]/);
       const code = lines.slice(i, end + 1).join("\n");
-      chunks.push(createChunk(relPath, i + 1, end + 1, code, "section", match[1], imports));
+      chunks.push(
+        createChunk(
+          relPath,
+          i + 1,
+          end + 1,
+          code,
+          "section",
+          match[1],
+          imports,
+          extractCalls(code),
+        ),
+      );
     }
   }
   return chunks;
@@ -150,7 +186,9 @@ function chunkBlocks(lines: string[], relPath: string, imports: string[]): Index
     const end = Math.min(start + blockSize, lines.length);
     const code = lines.slice(start, end).join("\n");
     if (code.trim())
-      chunks.push(createChunk(relPath, start + 1, end, code, "block", undefined, imports));
+      chunks.push(
+        createChunk(relPath, start + 1, end, code, "block", undefined, imports, extractCalls(code)),
+      );
     if (end >= lines.length) break;
     start += blockSize - overlap;
   }

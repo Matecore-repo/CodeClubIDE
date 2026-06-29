@@ -45,7 +45,7 @@ npm run dev
 - **Image viewer:** PNG, JPG, GIF, WebP, SVG, BMP, ICO.
 - **Cross-platform:** Windows, macOS, Linux. Single codebase, native packaging.
 
-![Screenshot](docs/Coding%20mode.png)
+![Screenshot](docs/Graph%20view.png)
 
 ## Modes / Modos
 

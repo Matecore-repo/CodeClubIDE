@@ -4,6 +4,7 @@ import { execFile } from "child_process";
 import { app } from "electron";
 import type { GraphData } from "../../../preload/types";
 import type { TopographicNode } from "../../../shared/topographicNodes";
+import { loadGraphStore, saveGraphStore } from "../../indexer/graphStore";
 import { getScanBinaryPath } from "../../indexer/scanner";
 
 function topoExePath(): string {
@@ -31,6 +32,7 @@ function topoPath(workspacePath: string): string {
 }
 
 function saveGraph(workspacePath: string, data: GraphData): void {
+  saveGraphStore(workspacePath, data);
   try {
     writeFileSync(graphPath(workspacePath), JSON.stringify(data));
   } catch {}
@@ -43,6 +45,8 @@ function saveTopographic(workspacePath: string, data: TopographicNode[]): void {
 }
 
 function loadGraph(workspacePath: string): GraphData | null {
+  const stored = loadGraphStore(workspacePath);
+  if (stored) return stored;
   try {
     const p = graphPath(workspacePath);
     if (!existsSync(p)) return null;

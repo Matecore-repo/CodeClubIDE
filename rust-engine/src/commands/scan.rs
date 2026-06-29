@@ -2,6 +2,8 @@ use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::Path;
 use std::time::UNIX_EPOCH;
+use regex::Regex;
+use crate::codegraph::extract_tree_sitter_ranges;
 use crate::models::{Chunk, ScanCache, CachedFile, EXCLUDED};
 use crate::utils::is_indexable;
 
@@ -111,6 +113,10 @@ fn parse_file(root: &Path, path: &Path) -> Vec<Chunk> {
         .map(|(start, end, kind, name)| {
             let lines: Vec<&str> = content.lines().collect();
             let code = lines[start.saturating_sub(1)..end.min(lines.len())].join("\n");
+            let outbound_calls = {
+                let calls = extract_calls(&code);
+                (!calls.is_empty()).then_some(calls)
+            };
             Chunk {
                 id: blake3::hash(format!("{relative}:{start}").as_bytes())
                     .to_hex()
@@ -122,7 +128,7 @@ fn parse_file(root: &Path, path: &Path) -> Vec<Chunk> {
                 kind: Some(kind),
                 name,
                 imports: (!imports.is_empty()).then(|| imports.clone()),
-                outbound_calls: None,
+                outbound_calls,
                 hash: hash.clone(),
                 modified_at,
             }
@@ -130,8 +136,32 @@ fn parse_file(root: &Path, path: &Path) -> Vec<Chunk> {
         .collect()
 }
 
+fn extract_calls(code: &str) -> Vec<String> {
+    let ignored = [
+        "if", "for", "while", "switch", "catch", "function", "return", "typeof", "new",
+    ];
+    let call_re = Regex::new(r"\b([A-Za-z_$][\w$]*)\s*\(").expect("valid call regex");
+    let mut calls = Vec::new();
+    for capture in call_re.captures_iter(code) {
+        let name = capture[1].to_string();
+        if name.is_empty() || ignored.contains(&name.as_str()) || calls.contains(&name) {
+            continue;
+        }
+        calls.push(name);
+    }
+    calls
+}
+
 fn section_ranges(path: &Path, content: &str) -> Vec<(usize, usize, String, Option<String>)> {
     let ext = path.extension().and_then(|v| v.to_str()).unwrap_or("").to_lowercase();
+    let tree_sitter_ranges = extract_tree_sitter_ranges(&ext, content);
+    if !tree_sitter_ranges.is_empty() {
+        return tree_sitter_ranges
+            .into_iter()
+            .map(|range| (range.start_line, range.end_line, range.kind, range.name))
+            .collect();
+    }
+
     let lines: Vec<&str> = content.lines().collect();
     let mut output = Vec::new();
     if ext == "md" {

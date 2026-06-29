@@ -354,7 +354,7 @@ export function Chat({
       {swarm && (
         <SwarmStatus
           agents={swarm.agents}
-          onKillAgent={swarm.killAgent}
+          _onKillAgent={swarm.killAgent}
           onClearAgents={swarm.clearAgents}
         />
       )}

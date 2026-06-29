@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import type { GraphData } from "../../../preload/types";
+import type { ArchitectureSummary, GraphData, ImpactResult } from "../../../preload/types";
 import type { TopographicNode } from "../../../shared/topographicNodes";
 
 // @ts-ignore - d3-force-3d has no TS types
@@ -42,40 +42,68 @@ function getColor(kind: string, fileType: string): string {
 function composeGraph(
   data: GraphData,
   topographic: TopographicNode[],
-  expandedFiles: Set<string>,
+  _expandedFiles: Set<string>,
 ): GraphData {
-  const nodes: any[] = [...data.nodes];
+  const nodes: any[] = [];
   const edges: any[] = [...data.edges];
-  const normalize = (path: string) => path.replace(/\\/g, "/").toLowerCase();
-  const graphFiles = data.nodes.filter((node) => node.kind === "file");
-  for (const filePath of expandedFiles) {
-    const graphFile = graphFiles.find((node) => normalize(node.path) === normalize(filePath));
-    if (!graphFile) continue;
-    const children = topographic.filter(
-      (node) =>
-        normalize(node.path) === normalize(filePath) &&
-        !["workspace", "folder", "file"].includes(node.type),
-    );
-    const childIds = new Set(children.map((node) => node.id));
-    for (const node of children) {
-      nodes.push({
-        id: `topo:${node.id}`,
+
+  // We use topographic as the structural base so ALL files/folders/symbols are visible.
+  for (const node of topographic) {
+    let kind = node.type;
+    let id = node.id;
+    
+    // Match architecture graph IDs for files
+    if (kind === "file") {
+        id = node.path;
+    } else if (kind === "workspace") {
+        kind = "root";
+        id = "root";
+    } else if (kind === "folder") {
+        kind = "dir";
+    } else {
+        kind = `topo:${kind}`;
+        id = `topo:${node.id}`;
+    }
+
+    nodes.push({
+        id,
         path: node.path,
-        kind: `topo:${node.type}`,
+        kind,
         fileType: node.language,
         size: Math.max(1, node.endLine - node.startLine + 1),
         name: node.name,
         startLine: node.startLine,
         endLine: node.endLine,
-      });
-      edges.push({
-        source:
-          node.parentId && childIds.has(node.parentId) ? `topo:${node.parentId}` : graphFile.id,
-        target: `topo:${node.id}`,
-        structural: true,
-      });
+    });
+
+    if (node.parentId) {
+        const parent = topographic.find(p => p.id === node.parentId);
+        if (parent) {
+            let sourceId = parent.id;
+            if (parent.type === "file") sourceId = parent.path;
+            else if (parent.type === "workspace") sourceId = "root";
+            else if (parent.type !== "folder") sourceId = `topo:${parent.id}`;
+            
+            edges.push({
+                source: sourceId,
+                target: id,
+                structural: true
+            });
+        }
     }
   }
+
+  // Preserve architecture properties (inDegree, etc.)
+  for (const archNode of data.nodes) {
+      if (archNode.kind === "file") {
+          const topoFile = nodes.find(n => n.id === archNode.id);
+          if (topoFile) {
+              topoFile.inDegree = archNode.inDegree;
+              topoFile.isCycleNode = archNode.isCycleNode;
+          }
+      }
+  }
+
   return { nodes, edges };
 }
 
@@ -118,7 +146,14 @@ function makeSpriteTexture(color: string): THREE.CanvasTexture {
 }
 
 function buildNodes(data: GraphData, _workspacePath: string): any[] {
-  const fileNodes = data.nodes.filter((n) => n.kind === "file");
+  const isInsideHiddenFolder = (path: string) => {
+    if (!path) return false;
+    const segments = path.replace(/\\/g, "/").split("/");
+    return segments.slice(0, -1).some(seg => seg.startsWith(".") && seg !== ".");
+  };
+
+  const visibleNodes = data.nodes.filter(n => !isInsideHiddenFolder(n.path || ""));
+  const fileNodes = visibleNodes.filter((n) => n.kind === "file");
   const maxSize = Math.max(...fileNodes.map((n) => n.size), 1);
 
   // Encontrar el umbral de in-degree para el top 10% de los módulos núcleo
@@ -126,7 +161,7 @@ function buildNodes(data: GraphData, _workspacePath: string): any[] {
   const coreThresholdIdx = Math.floor(inDegrees.length * 0.1);
   const coreThreshold = inDegrees.length > 0 ? Math.max(2, inDegrees[coreThresholdIdx]) : 999999;
 
-  return data.nodes.map((n: any) => {
+  return visibleNodes.map((n: any) => {
     let val: number;
     if (n.kind === "root") val = 20;
     else if (n.kind === "dir") val = 5;
@@ -177,6 +212,8 @@ export function GraphView({
   const topographicRef = useRef<TopographicNode[]>([]);
   const expandedFilesRef = useRef(new Set<string>());
   const onNodeClickRef = useRef(onNodeClick);
+  const [architecture, setArchitecture] = useState<ArchitectureSummary | null>(null);
+  const [impact, setImpact] = useState<ImpactResult | null>(null);
   wsRef.current = workspacePath;
   onNodeClickRef.current = onNodeClick;
 
@@ -301,7 +338,13 @@ export function GraphView({
           return `${baseName} (Imports: ${d.inDegree || 0})`;
         });
         g.onNodeClick((d: any) => {
-          if (d?.path && d.kind !== "root" && d.kind !== "dir") onNodeClickRef.current?.(d.path);
+          if (d?.path && d.kind !== "root" && d.kind !== "dir") {
+            onNodeClickRef.current?.(d.path);
+            window.api
+              .indexingImpact(wsRef.current, d.path)
+              .then(setImpact)
+              .catch(() => setImpact(null));
+          }
         });
         g.onNodeRightClick((d: any) => {
           if (d?.kind !== "file" || !d.path || !baseDataRef.current) return;
@@ -345,6 +388,13 @@ export function GraphView({
         console.error("GraphView error:", err);
       }
     })();
+
+    window.api
+      .indexingArchitecture(workspacePath)
+      .then((summary) => {
+        if (!destroyed) setArchitecture(summary);
+      })
+      .catch(() => {});
 
     return () => {
       destroyed = true;
@@ -410,8 +460,9 @@ export function GraphView({
 
       if (!isFreeMovementRef.current) return;
 
-      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "control"].includes(key)) {
+      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", " ", "control"].includes(key)) {
         e.preventDefault();
+        e.stopPropagation();
       }
       activeKeys.add(key);
     };
@@ -485,15 +536,16 @@ export function GraphView({
       animationFrameId = requestAnimationFrame(updateMovement);
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+    window.addEventListener("keyup", handleKeyUp, { capture: true });
+    containerRef.current?.addEventListener("wheel", handleWheel, { passive: false });
     animationFrameId = requestAnimationFrame(updateMovement);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("wheel", handleWheel);
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("keydown", handleKeyDown, { capture: true });
+      window.removeEventListener("keyup", handleKeyUp, { capture: true });
+      containerRef.current?.removeEventListener("wheel", handleWheel);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
@@ -558,6 +610,8 @@ export function GraphView({
         </div>
       )}
 
+      {/* Architecture Strip Removed */}
+
       {/* Graph Container */}
       <div
         ref={containerRef}
@@ -574,7 +628,123 @@ export function GraphView({
           boxSizing: "border-box",
           transition: "border 0.2s ease-in-out",
         }}
-      />
+      >
+        {impact && <GraphImpactOverlay impact={impact} />}
+      </div>
+    </div>
+  );
+}
+
+function GraphMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div
+      style={{
+        minWidth: 0,
+        padding: "6px 8px",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 6,
+        background: "rgba(255,255,255,0.03)",
+      }}
+    >
+      <div style={{ color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {label}
+      </div>
+      <div style={{ color: "var(--text-strong)", fontWeight: 600 }}>{value}</div>
+    </div>
+  );
+}
+
+function GraphArchitectureStrip({ architecture }: { architecture: ArchitectureSummary }) {
+  const topHotspots = architecture.hotspots.slice(0, 3);
+  const topRoutes = architecture.routes.slice(0, 3);
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, minmax(0, 1fr)) 1.6fr 1.6fr",
+        gap: 8,
+        padding: "8px 12px",
+        borderBottom: "1px solid var(--border-weaker-base)",
+        flexShrink: 0,
+        fontSize: 11,
+      }}
+    >
+      <GraphMetric label="Files" value={architecture.totalFiles} />
+      <GraphMetric label="Chunks" value={architecture.totalChunks} />
+      <GraphMetric label="Edges" value={architecture.totalEdges} />
+      <GraphMetric label="Routes" value={architecture.routes.length} />
+      <GraphList label="Hotspots" items={topHotspots.map((item) => item.path)} />
+      <GraphList label="Routes" items={topRoutes.map((item) => item.name)} />
+    </div>
+  );
+}
+
+function GraphList({ label, items }: { label: string; items: string[] }) {
+  return (
+    <div
+      style={{
+        minWidth: 0,
+        padding: "6px 8px",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 6,
+        background: "rgba(255,255,255,0.03)",
+      }}
+    >
+      <div style={{ color: "var(--text-muted)", marginBottom: 3 }}>{label}</div>
+      <div style={{ display: "grid", gap: 2 }}>
+        {(items.length ? items : ["None"]).map((item, index) => (
+          <div
+            key={`${item}-${index}`}
+            title={item}
+            style={{
+              color: "var(--text-strong)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {item}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GraphImpactOverlay({ impact }: { impact: ImpactResult }) {
+  const affected = impact.direct.slice(0, 5);
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 12,
+        bottom: 12,
+        width: "min(520px, calc(100% - 24px))",
+        padding: 10,
+        border: "1px solid rgba(255,255,255,0.1)",
+        borderRadius: 6,
+        background: "rgba(17,17,17,0.92)",
+        fontSize: 12,
+        pointerEvents: "none",
+      }}
+    >
+      <div style={{ color: "var(--text-muted)", marginBottom: 4 }}>Impact</div>
+      <div
+        title={impact.targetFile ?? impact.target}
+        style={{
+          color: "var(--text-strong)",
+          fontWeight: 600,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {impact.targetFile ?? impact.target}
+      </div>
+      <div style={{ color: "var(--text-muted)", marginTop: 6 }}>
+        {impact.direct.length} direct, {impact.transitive.length} transitive
+      </div>
+      {affected.length > 0 && <GraphList label="Direct" items={affected} />}
     </div>
   );
 }

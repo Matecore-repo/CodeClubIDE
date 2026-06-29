@@ -154,6 +154,16 @@ const api = {
   indexingReindex: (workspacePath: string, filePath?: string) =>
     ipcRenderer.invoke("indexing:reindex", workspacePath, filePath),
   indexingStatus: (workspacePath: string) => ipcRenderer.invoke("indexing:status", workspacePath),
+  indexingArchitecture: (workspacePath: string) =>
+    ipcRenderer.invoke("indexing:architecture", workspacePath),
+  indexingImpact: (workspacePath: string, targetPath: string) =>
+    ipcRenderer.invoke("indexing:impact", workspacePath, targetPath),
+  indexingQueryGraph: (workspacePath: string, query: any) =>
+    ipcRenderer.invoke("indexing:queryGraph", workspacePath, query),
+  indexingExportGraphSnapshot: (workspacePath: string) =>
+    ipcRenderer.invoke("indexing:exportGraphSnapshot", workspacePath),
+  indexingImportGraphSnapshot: (workspacePath: string) =>
+    ipcRenderer.invoke("indexing:importGraphSnapshot", workspacePath),
   rustSearch: (workspacePath: string, query: string, topK?: number) =>
     ipcRenderer.invoke("fs:rustSearch", workspacePath, query, topK),
   memorySet: (workspacePath: string, key: string, value: string) =>

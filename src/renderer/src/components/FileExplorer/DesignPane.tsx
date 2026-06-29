@@ -1034,7 +1034,7 @@ function DesignRow({
   label,
   kind,
   depth = 0,
-  _expanded,
+  expanded: _expanded,
   badge,
   active,
   activeColor,

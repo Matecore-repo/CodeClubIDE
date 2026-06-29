@@ -4,6 +4,7 @@ import "./editNode";
 import "./deleteNode";
 import "./terminal";
 import "./search";
+import "./graph";
 import "./subagents";
 import "./toolChain";
 import "./diffTopographic";

@@ -41,6 +41,52 @@ export interface IndexStatus {
   exists: boolean;
 }
 
+export interface ArchitectureSummary {
+  workspacePath: string;
+  graphDbPath: string;
+  totalFiles: number;
+  totalChunks: number;
+  totalEdges: number;
+  languages: { language: string; files: number; chunks: number }[];
+  topDirectories: { path: string; files: number }[];
+  hotspots: { path: string; imports: number; importedBy: number }[];
+  entryPoints: string[];
+  routes: { kind: string; name: string; filePath: string; line: number }[];
+}
+
+export interface ImpactResult {
+  target: string;
+  targetKind: "file" | "symbol";
+  targetFile?: string;
+  direct: string[];
+  transitive: string[];
+  callers: { name?: string; filePath: string; startLine: number; endLine: number }[];
+}
+
+export interface GraphQuery {
+  pathPattern?: string;
+  kind?: string;
+  scope?: "files" | "symbols" | "routes";
+  relation?: "callers" | "callees";
+  namePattern?: string;
+  minImports?: number;
+  minImportedBy?: number;
+  limit?: number;
+}
+
+export interface GraphQueryResult {
+  id: string;
+  path: string;
+  kind: string;
+  imports: number;
+  importedBy: number;
+  name?: string;
+  startLine?: number;
+  endLine?: number;
+  relation?: string;
+  line?: number;
+}
+
 export interface FileRangeResult {
   data: string;
   hash: string;
@@ -292,6 +338,11 @@ export interface ElectronAPI {
   indexingSearch: (workspacePath: string, query: string, topK?: number) => Promise<SearchResult[]>;
   indexingReindex: (workspacePath: string, filePath?: string) => Promise<void>;
   indexingStatus: (workspacePath: string) => Promise<IndexStatus>;
+  indexingArchitecture: (workspacePath: string) => Promise<ArchitectureSummary>;
+  indexingImpact: (workspacePath: string, targetPath: string) => Promise<ImpactResult>;
+  indexingQueryGraph: (workspacePath: string, query: GraphQuery) => Promise<GraphQueryResult[]>;
+  indexingExportGraphSnapshot: (workspacePath: string) => Promise<string | null>;
+  indexingImportGraphSnapshot: (workspacePath: string) => Promise<boolean>;
   rustSearch: (workspacePath: string, query: string, topK?: number) => Promise<SearchResult[]>;
   memorySet: (workspacePath: string, key: string, value: string) => Promise<boolean>;
   memoryDelete: (workspacePath: string, key: string) => Promise<boolean>;

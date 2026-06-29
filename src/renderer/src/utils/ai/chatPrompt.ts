@@ -44,7 +44,7 @@ export function systemPrompt(
     }
   }
 
-  prompt += `\n\nCODE EXPLORATION PROTOCOL: Search first. Prefer search/topographic for symbols and paths; use search/classic for content. For trivial work, read/rust with only filePath directly returns file content and hash; request the tree only when hierarchy is needed. Edit by nodeId, unique nodeName, or line range using the returned hash. Edit the smallest stable target; use whole-file topographic editing only when most of the file must change.`;
+  prompt += `\n\nCODE EXPLORATION PROTOCOL: Search first. Use graph/architecture for repo overview, graph/query for dependency hotspots, and graph/impact before risky edits. Prefer search/topographic for symbols and paths; use search/classic for content. For trivial work, read/rust with only filePath directly returns file content and hash; request the tree only when hierarchy is needed. Edit by nodeId, unique nodeName, or line range using the returned hash. Edit the smallest stable target; use whole-file topographic editing only when most of the file must change.`;
 
   if (workspaceTree) {
     const hasCode = /\.(ts|tsx|js|jsx|py|rs|go|cpp|c|sh|bash)/i.test(workspaceTree);

@@ -1,6 +1,7 @@
 use std::env;
 
 mod commands;
+mod codegraph;
 mod dap;
 #[path = "bin/embed.rs"]
 mod embed;

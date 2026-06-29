@@ -156,34 +156,7 @@ function HomeEmptyState({
             style={{ width: logoSize, height: logoSize, objectFit: "contain", opacity: 0.8 }}
           />
         )}
-        {!isCompact && (
-          <span
-            style={{
-              minWidth: 0,
-              color: "#fff",
-              fontFamily: "var(--font-family-mono)",
-              fontSize: 24,
-              fontWeight: 800,
-              letterSpacing: "-0.04em",
-              lineHeight: 1.1,
-              overflowWrap: "anywhere",
-            }}
-          >
-            Just keep coding.
-          </span>
-        )}
-        {isCompact && (
-          <span
-            style={{
-              color: "rgba(255,255,255,0.52)",
-              fontSize: 14,
-              fontWeight: 500,
-              textAlign: "center",
-            }}
-          >
-            Just keep coding.
-          </span>
-        )}
+        {/* "Just keep coding" removed */}
       </div>
       {!showTerminal && !isCompact && (
         <div
