@@ -31,7 +31,7 @@ jobs:
         run: npm install
 
       - name: Fix Vite Worker Issue
-        run: find node_modules/@open-pencil/core/dist -name "*.js" -exec sed -i '/sourceMappingURL/d' {} + || true
+        run: echo "export {}" > node_modules/@open-pencil/core/dist/kiwi/fig/parse/worker.ts
 
       - name: Build Application
         run: npm run build
