@@ -87,6 +87,13 @@ export function CanvasPanel({
     width: number;
     height: number;
   } | null>(null);
+  const [pendingLayerPatch, setPendingLayerPatch] = useState<{
+    layerId: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
   const [colorPatch, setColorPatch] = useState<{ fill: string } | null>(null);
   const colorTimeoutRef = useRef<number | null>(null);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -146,7 +153,8 @@ export function CanvasPanel({
   const renderedLayers = useMemo(
     () =>
       absoluteLayers.map((layer) => {
-        let l = layerPatch?.layerId === layer.id ? { ...layer, ...layerPatch } : layer;
+        const visualPatch = layerPatch ?? pendingLayerPatch;
+        let l = visualPatch?.layerId === layer.id ? { ...layer, ...visualPatch } : layer;
         if (colorPatch && selectedLayerIds.includes(layer.id)) {
           l = {
             ...l,
@@ -156,7 +164,7 @@ export function CanvasPanel({
         }
         return l;
       }),
-    [absoluteLayers, layerPatch, colorPatch, selectedLayerIds],
+    [absoluteLayers, layerPatch, pendingLayerPatch, colorPatch, selectedLayerIds],
   );
   const auditReport = useMemo(() => (page ? lintDesignPage(page) : null), [page]);
   const auditIssueCount = auditReport ? auditReport.summary.error + auditReport.summary.warning : 0;
@@ -172,6 +180,20 @@ export function CanvasPanel({
     }
     setAbsoluteLayers([]);
   }, [page]);
+
+  useEffect(() => {
+    if (!pendingLayerPatch) return;
+    const layer = absoluteLayers.find((item) => item.id === pendingLayerPatch.layerId);
+    if (
+      layer &&
+      layer.x === pendingLayerPatch.x &&
+      layer.y === pendingLayerPatch.y &&
+      layer.width === pendingLayerPatch.width &&
+      layer.height === pendingLayerPatch.height
+    ) {
+      setPendingLayerPatch(null);
+    }
+  }, [absoluteLayers, pendingLayerPatch]);
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -496,6 +518,7 @@ export function CanvasPanel({
       setTool("select");
     } else if ((gesture.type === "move" || gesture.type === "resize") && layerPatch) {
       const patch = toLocalPatch(layerPatch);
+      setPendingLayerPatch(layerPatch);
       if (page) {
         setPage({
           ...page,
