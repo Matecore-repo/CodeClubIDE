@@ -122,18 +122,19 @@ export function usePanelDefs(
     {
       id: "file-viewer",
       visible: fileTabs.length > 0 && !!activeFilePath,
-      element: fileTabs.length > 0 && activeFilePath ? (
-        <FileTabsPanel
-          tabs={fileTabs}
-          activePath={activeFilePath}
-          activeColor={activeColor}
-          onBack={onBack ?? (() => {})}
-          workspacePath={workspacePath}
-          hasOtherPanels={hasOtherPanels}
-          onSelectTab={props.onFileTabSelect}
-          onCloseTab={props.onFileTabClose}
-        />
-      ) : null,
+      element:
+        fileTabs.length > 0 && activeFilePath ? (
+          <FileTabsPanel
+            tabs={fileTabs}
+            activePath={activeFilePath}
+            activeColor={activeColor}
+            onBack={onBack ?? (() => {})}
+            workspacePath={workspacePath}
+            hasOtherPanels={hasOtherPanels}
+            onSelectTab={props.onFileTabSelect}
+            onCloseTab={props.onFileTabClose}
+          />
+        ) : null,
     },
     {
       id: "chat-messages",

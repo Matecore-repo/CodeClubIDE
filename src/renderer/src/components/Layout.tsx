@@ -235,26 +235,23 @@ export function Layout({
     [explorerMode, openPanel],
   );
 
-  const openDraggedFileAsTab = useCallback(
-    () => {
-      const path = draggedFilePath;
-      if (!path) return;
-      if (explorerMode === "studio") return;
-      setFileTabs((current) => {
-        if (current.some((tab) => tab.path === path)) return current;
-        if (current.length >= MAX_FILE_TABS) return current;
-        return [...current, { path }];
-      });
-      setActiveFilePath((current) => {
-        if (fileTabs.length >= MAX_FILE_TABS && !fileTabs.some((tab) => tab.path === path)) {
-          return current;
-        }
-        return path;
-      });
-      setActivePanels(["file"]);
-    },
-    [draggedFilePath, explorerMode, fileTabs, setActivePanels],
-  );
+  const openDraggedFileAsTab = useCallback(() => {
+    const path = draggedFilePath;
+    if (!path) return;
+    if (explorerMode === "studio") return;
+    setFileTabs((current) => {
+      if (current.some((tab) => tab.path === path)) return current;
+      if (current.length >= MAX_FILE_TABS) return current;
+      return [...current, { path }];
+    });
+    setActiveFilePath((current) => {
+      if (fileTabs.length >= MAX_FILE_TABS && !fileTabs.some((tab) => tab.path === path)) {
+        return current;
+      }
+      return path;
+    });
+    setActivePanels(["file"]);
+  }, [draggedFilePath, explorerMode, fileTabs, setActivePanels]);
 
   const handleFileTabClose = useCallback(
     (path: string) => {

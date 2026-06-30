@@ -15,10 +15,10 @@ description: >
 ## 2. Zero Overengineering (Robust Simplicity)
 
 - **KISS & YAGNI**: Code only for today's requirement. Avoid premature abstractions, unnecessary layers, or designing for hypothetical future scenarios.
-- **Robust Simplicity**: Logic must be straightforward and easy to read, avoiding "clever code", but always handling edge cases and errors.
-- **Architectural Consistency**: Reuse existing patterns, utilities, and dependencies in the project. Do not invent parallel structures or install redundant libraries.
+- **Robust Simplicity**: Logic must be straightforward and easy to read, avoiding "clever code".
+- **Architectural Alignment**: Seamlessly integrate with the existing architecture. Reuse existing patterns, utilities, and dependencies. Do NOT install unnecessary or redundant third-party libraries.
 - **Zero Invasive Refactors**: Make surgical changes. Do not rewrite entire functions or alter shared contracts if the problem can be solved locally.
-- **Strict Scope**: Stay within the user's explicit request. Do not modify the interface, visual design, or interaction flows unless the user specifically asks for it.
+- **Strict Scope & Edge Cases**: Focus exclusively on the explicitly requested requirements. Do NOT proactively handle unrequested edge cases, out-of-scope scenarios, or modify visual/interaction flows unless specifically asked.
 - **Clear Boundaries**: ALWAYS generate an implementation plan before coding. Define the goal, the files to touch, and the success criteria. Stop immediately upon solving the problem.
 
 ## 3. Code Health Review

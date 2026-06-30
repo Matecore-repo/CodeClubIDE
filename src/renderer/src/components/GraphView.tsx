@@ -51,57 +51,57 @@ function composeGraph(
   for (const node of topographic) {
     let kind: string = node.type;
     let id = node.id;
-    
+
     // Match architecture graph IDs for files
     if (kind === "file") {
-        id = node.path;
+      id = node.path;
     } else if (kind === "workspace") {
-        kind = "root";
-        id = "root";
+      kind = "root";
+      id = "root";
     } else if (kind === "folder") {
-        kind = "dir";
+      kind = "dir";
     } else {
-        kind = `topo:${kind}`;
-        id = `topo:${node.id}`;
+      kind = `topo:${kind}`;
+      id = `topo:${node.id}`;
     }
 
     nodes.push({
-        id,
-        path: node.path,
-        kind,
-        fileType: node.language,
-        size: Math.max(1, node.endLine - node.startLine + 1),
-        name: node.name,
-        startLine: node.startLine,
-        endLine: node.endLine,
+      id,
+      path: node.path,
+      kind,
+      fileType: node.language,
+      size: Math.max(1, node.endLine - node.startLine + 1),
+      name: node.name,
+      startLine: node.startLine,
+      endLine: node.endLine,
     });
 
     if (node.parentId) {
-        const parent = topographic.find(p => p.id === node.parentId);
-        if (parent) {
-            let sourceId = parent.id;
-            if (parent.type === "file") sourceId = parent.path;
-            else if (parent.type === "workspace") sourceId = "root";
-            else if (parent.type !== "folder") sourceId = `topo:${parent.id}`;
-            
-            edges.push({
-                source: sourceId,
-                target: id,
-                structural: true
-            });
-        }
+      const parent = topographic.find((p) => p.id === node.parentId);
+      if (parent) {
+        let sourceId = parent.id;
+        if (parent.type === "file") sourceId = parent.path;
+        else if (parent.type === "workspace") sourceId = "root";
+        else if (parent.type !== "folder") sourceId = `topo:${parent.id}`;
+
+        edges.push({
+          source: sourceId,
+          target: id,
+          structural: true,
+        });
+      }
     }
   }
 
   // Preserve architecture properties (inDegree, etc.)
   for (const archNode of data.nodes) {
-      if (archNode.kind === "file") {
-          const topoFile = nodes.find(n => n.id === archNode.id);
-          if (topoFile) {
-              topoFile.inDegree = archNode.inDegree;
-              topoFile.isCycleNode = archNode.isCycleNode;
-          }
+    if (archNode.kind === "file") {
+      const topoFile = nodes.find((n) => n.id === archNode.id);
+      if (topoFile) {
+        topoFile.inDegree = archNode.inDegree;
+        topoFile.isCycleNode = archNode.isCycleNode;
       }
+    }
   }
 
   return { nodes, edges };
@@ -149,10 +149,10 @@ function buildNodes(data: GraphData, _workspacePath: string): any[] {
   const isInsideHiddenFolder = (path: string) => {
     if (!path) return false;
     const segments = path.replace(/\\/g, "/").split("/");
-    return segments.slice(0, -1).some(seg => seg.startsWith(".") && seg !== ".");
+    return segments.slice(0, -1).some((seg) => seg.startsWith(".") && seg !== ".");
   };
 
-  const visibleNodes = data.nodes.filter(n => !isInsideHiddenFolder(n.path || ""));
+  const visibleNodes = data.nodes.filter((n) => !isInsideHiddenFolder(n.path || ""));
   const fileNodes = visibleNodes.filter((n) => n.kind === "file");
   const maxSize = Math.max(...fileNodes.map((n) => n.size), 1);
 
@@ -460,7 +460,20 @@ export function GraphView({
 
       if (!isFreeMovementRef.current) return;
 
-      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", " ", "control"].includes(key)) {
+      if (
+        [
+          "w",
+          "a",
+          "s",
+          "d",
+          "arrowup",
+          "arrowdown",
+          "arrowleft",
+          "arrowright",
+          " ",
+          "control",
+        ].includes(key)
+      ) {
         e.preventDefault();
         e.stopPropagation();
       }

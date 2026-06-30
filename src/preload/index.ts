@@ -88,8 +88,8 @@ const api = {
   gitFileOriginal: (workspacePath: string, filePath: string) =>
     ipcRenderer.invoke("git:fileOriginal", workspacePath, filePath),
 
-  createTerminal: (cwd: string, useWsl?: boolean) =>
-    ipcRenderer.invoke("terminal:create", cwd, useWsl),
+  createTerminal: (cwd: string, useWsl?: boolean, profile?: string) =>
+    ipcRenderer.invoke("terminal:create", cwd, useWsl, profile),
   writeToTerminal: (id: string, data: string) => ipcRenderer.invoke("terminal:write", id, data),
   killTerminal: (id: string) => ipcRenderer.invoke("terminal:kill", id),
   resizeTerminal: (id: string, cols: number, rows: number) =>

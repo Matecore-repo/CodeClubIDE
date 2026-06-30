@@ -281,7 +281,7 @@ export interface ElectronAPI {
     status: "tracked" | "untracked" | "outside-workspace" | "unavailable";
   }>;
 
-  createTerminal: (cwd: string, useWsl?: boolean) => Promise<string>;
+  createTerminal: (cwd: string, useWsl?: boolean, profile?: string) => Promise<string>;
   writeToTerminal: (id: string, data: string) => Promise<void>;
   killTerminal: (id: string) => Promise<void>;
   resizeTerminal: (id: string, cols: number, rows: number) => Promise<void>;

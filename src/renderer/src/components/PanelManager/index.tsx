@@ -559,7 +559,8 @@ export function PanelManager(props: PanelManagerProps) {
       >
         {cells.map((cell, i) => {
           const empty = i === 0 ? visiblePanels.length === 0 : secondaryPanels[i - 1] === null;
-          const fileIsOpen = (path: string) => primaryFileIsOpen(path) || secondaryFiles.includes(path);
+          const fileIsOpen = (path: string) =>
+            primaryFileIsOpen(path) || secondaryFiles.includes(path);
           return (
             <div
               key={i}

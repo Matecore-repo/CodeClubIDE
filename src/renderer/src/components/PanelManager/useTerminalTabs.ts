@@ -47,14 +47,17 @@ export function useTerminalTabs({
     });
   }, [workspacePath, tabsMap]);
 
-  const handleAddTab = useCallback(() => {
-    const current = tabsMap[wsKey] ?? [];
-    const newId = Math.random().toString(36).substring(7);
-    const label = `Terminal ${current.length + 1}`;
-    const next = [...current, { id: newId, label }];
-    setTabsMap((prev) => ({ ...prev, [wsKey]: next }));
-    setActiveTabMap((prev) => ({ ...prev, [wsKey]: newId }));
-  }, [tabsMap, wsKey]);
+  const handleAddTab = useCallback(
+    (profile?: string) => {
+      const current = tabsMap[wsKey] ?? [];
+      const newId = Math.random().toString(36).substring(7);
+      const label = `Terminal ${current.length + 1}`;
+      const next = [...current, { id: newId, label, profile }];
+      setTabsMap((prev) => ({ ...prev, [wsKey]: next }));
+      setActiveTabMap((prev) => ({ ...prev, [wsKey]: newId }));
+    },
+    [tabsMap, wsKey],
+  );
 
   const handleCloseTab = useCallback(
     (tabId: string) => {

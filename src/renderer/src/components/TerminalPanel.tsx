@@ -1,18 +1,20 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 
-export type TerminalTab = { id: string; label: string; terminalId?: string };
+export type TerminalTab = { id: string; label: string; terminalId?: string; profile?: string };
 
 function TerminalInstance({
   cwd,
   sandbox,
+  profile,
   visible,
   onTerminalCreated,
 }: {
   cwd: string;
   sandbox?: boolean;
+  profile?: string;
   visible: boolean;
   onTerminalCreated: (id: string) => void;
 }) {
@@ -102,7 +104,7 @@ function TerminalInstance({
     let cleanupData: (() => void) | undefined;
     const mounted = { current: true };
 
-    window.api.createTerminal(cwd, sandbox).then(async (id) => {
+    window.api.createTerminal(cwd, sandbox, profile).then(async (id) => {
       if (!mounted.current) return;
       termIdRef.current = id;
       onTerminalCreated(id);
@@ -124,7 +126,7 @@ function TerminalInstance({
       term.dispose();
       if (termIdRef.current) window.api.killTerminal(termIdRef.current);
     };
-  }, [cwd, sandbox]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cwd, sandbox, profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (visible && fitRef.current) {
@@ -174,10 +176,13 @@ export function TerminalPanel({
   onClose: () => void;
   tabs: TerminalTab[];
   activeTabId: string;
-  onAddTab: () => void;
+  onAddTab: (profile?: string) => void;
   onCloseTab: (id: string) => void;
   onSetActiveTab: (id: string) => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuCoords, setMenuCoords] = useState({ x: 0, y: 0 });
+  const plusBtnRef = useRef<HTMLButtonElement>(null);
   return (
     <div
       style={{ display: "flex", flexDirection: "column", height: "100%", background: "#0d0d0d" }}
@@ -195,6 +200,8 @@ export function TerminalPanel({
           userSelect: "none",
           flexShrink: 0,
           height: 34,
+          position: "relative",
+          zIndex: 50,
         }}
       >
         {/* Back Button */}
@@ -278,7 +285,12 @@ export function TerminalPanel({
 
         {/* Plus Button */}
         <button
-          onClick={onAddTab}
+          ref={plusBtnRef}
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setMenuCoords({ x: rect.left, y: rect.bottom });
+            setMenuOpen(!menuOpen);
+          }}
           style={{
             border: "none",
             background: "transparent",
@@ -293,6 +305,7 @@ export function TerminalPanel({
             borderRadius: 4,
             marginLeft: 4,
             transition: "all 0.15s",
+            flexShrink: 0,
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = "rgba(255,255,255,0.08)";
@@ -307,6 +320,56 @@ export function TerminalPanel({
         </button>
       </div>
 
+      {menuOpen && (
+        <>
+          <div
+            style={{ position: "fixed", inset: 0, zIndex: 9998 }}
+            onClick={() => setMenuOpen(false)}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: menuCoords.y + 4,
+              left: menuCoords.x,
+              zIndex: 9999,
+              background: "#111111",
+              border: "1px solid #222",
+              borderRadius: 4,
+              padding: "4px 0",
+              minWidth: 140,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+            }}
+          >
+            {[
+              { label: "Default", profile: undefined },
+              { label: "PowerShell", profile: "powershell" },
+              { label: "Command Prompt", profile: "cmd" },
+              { label: "Git Bash", profile: "git-bash" },
+              { label: "WSL2", profile: "wsl" },
+            ].map((opt) => (
+              <div
+                key={opt.label}
+                onClick={() => {
+                  onAddTab(opt.profile);
+                  setMenuOpen(false);
+                }}
+                style={{
+                  padding: "6px 12px",
+                  fontSize: 11,
+                  color: "#c8c8c8",
+                  cursor: "pointer",
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#171717")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                {opt.label}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
       {/* Terminal Viewport Container */}
       <div style={{ flex: 1, position: "relative", overflow: "hidden", background: "#0d0d0d" }}>
         {tabs.map((tab) => (
@@ -314,6 +377,7 @@ export function TerminalPanel({
             key={tab.id}
             cwd={cwd}
             sandbox={sandbox}
+            profile={tab.profile}
             visible={tab.id === activeTabId}
             onTerminalCreated={(termId) => {
               // bubble up via noop — parent state already tracks terminalId if needed

@@ -40,13 +40,16 @@ export function cleanupTerminals(): void {
 }
 
 export function registerTerminalHandlers(): void {
-  ipcMain.handle("terminal:create", (event, cwd: string, useWsl?: boolean) => {
+  ipcMain.handle("terminal:create", (event, cwd: string, useWsl?: boolean, profile?: string) => {
     const id = crypto.randomUUID();
     const key = `${id}`;
     let shellPath = detectShell();
 
-    if (useWsl && process.platform === "win32") {
-      shellPath = "wsl.exe";
+    if (process.platform === "win32") {
+      if (profile === "powershell") shellPath = "powershell.exe";
+      else if (profile === "git-bash") shellPath = "C:\\Program Files\\Git\\bin\\bash.exe";
+      else if (profile === "cmd") shellPath = "cmd.exe";
+      else if (profile === "wsl" || useWsl) shellPath = "wsl.exe";
     }
 
     const cols = 80;
