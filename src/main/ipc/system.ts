@@ -20,6 +20,13 @@ import { syncComponentToInstances } from "../../shared/designComponents";
 import { buildDesignExportFiles } from "../../shared/designExport";
 import { resolveDesignTokens } from "../../shared/designTokens";
 import { EMPTY_TOKENS, type DesignTokenCollection } from "../../shared/design";
+import {
+  ipcWarn,
+  isLikelyBase64,
+  normalizeIpcPath,
+  normalizeIpcString,
+  normalizeIpcUrl,
+} from "./validation";
 
 const designPageCache = new Map<string, DesignPage>();
 const DESIGN_CACHE_LIMIT = 32;
@@ -398,7 +405,12 @@ export function registerSystemHandlers(): void {
   });
 
   ipcMain.handle("system:openLink", (_event, url: string) => {
-    return shell.openExternal(url);
+    try {
+      return shell.openExternal(normalizeIpcUrl(url, ["http:", "https:", "mailto:"]));
+    } catch (error) {
+      ipcWarn("system:openLink", error);
+      return undefined;
+    }
   });
 
   ipcMain.handle("system:openEmail", (_event, email: string) => {
@@ -417,7 +429,7 @@ export function registerSystemHandlers(): void {
 
   ipcMain.handle("system:fetch", async (_event, url: string, options?: any) => {
     try {
-      const res = await fetch(url, options);
+      const res = await fetch(normalizeIpcUrl(url), options);
       const data = await res.text();
       return {
         ok: res.ok,
@@ -427,6 +439,7 @@ export function registerSystemHandlers(): void {
         headers: Object.fromEntries((res.headers as any).entries()),
       };
     } catch (err: any) {
+      ipcWarn("system:fetch", err);
       return { ok: false, error: err.message };
     }
   });
@@ -434,8 +447,16 @@ export function registerSystemHandlers(): void {
   ipcMain.handle("system:fetchStream", (event, url: string, options?: any) => {
     const streamId = Math.random().toString(36).slice(2);
     const win = BrowserWindow.fromWebContents(event.sender);
+    let safeUrl: string;
+    try {
+      safeUrl = normalizeIpcUrl(url);
+    } catch (error: any) {
+      ipcWarn("system:fetchStream", error);
+      queueMicrotask(() => win?.webContents.send(`stream:error:${streamId}`, error.message));
+      return streamId;
+    }
 
-    fetch(url, options)
+    fetch(safeUrl, options)
       .then(async (res) => {
         if (!res.ok) {
           const err = await res.text();
@@ -953,25 +974,30 @@ export function registerSystemHandlers(): void {
   );
 
   ipcMain.handle("system:designExportFiles", (_event, workspacePath: string, pageId: string) => {
-    const page = readDesignPage(workspacePath, pageId);
-    if (!page) return { ok: false, error: "Page not found." };
     try {
+      const safeWorkspace = normalizeIpcPath(workspacePath, "workspacePath");
+      const safePageId = normalizeIpcString(pageId, "pageId");
+      const page = readDesignPage(safeWorkspace, safePageId);
+      if (!page) return { ok: false, error: "Page not found." };
       const files = buildDesignExportFiles(page);
-      const exportDir = join(designPaths(workspacePath).root, "exports", files.pageName);
+      const exportDir = join(designPaths(safeWorkspace).root, "exports", files.pageName);
       mkdirSync(exportDir, { recursive: true });
       writeFileSync(join(exportDir, `${files.pageName}.tsx`), files.tsx);
       writeFileSync(join(exportDir, `${files.pageName}.module.css`), files.css);
       writeFileSync(join(exportDir, `${files.pageName}-tokens.json`), files.tokensJson);
       return { ok: true, path: exportDir, name: files.pageName };
     } catch (error: any) {
+      ipcWarn("system:designExportFiles", error);
       return { ok: false, error: error?.message || "Export error." };
     }
   });
 
   ipcMain.handle("system:designExportPng", (_event, workspacePath: string, pageId: string) => {
-    const page = readDesignPage(workspacePath, pageId);
-    if (!page) return { ok: false, error: "Page not found." };
     try {
+      const safeWorkspace = normalizeIpcPath(workspacePath, "workspacePath");
+      const safePageId = normalizeIpcString(pageId, "pageId");
+      const page = readDesignPage(safeWorkspace, safePageId);
+      if (!page) return { ok: false, error: "Page not found." };
       const visible = page.layers.filter((l) => l.visible && l.type !== "group");
       const w = Math.max(1, ...visible.map((l) => l.x + l.width));
       const h = Math.max(1, ...visible.map((l) => l.y + l.height));
@@ -980,7 +1006,7 @@ export function registerSystemHandlers(): void {
           .replace(/[^a-zA-Z0-9]+/g, "-")
           .replace(/-+/g, "-")
           .replace(/^-|-$/g, "") || "design";
-      const exportDir = join(designPaths(workspacePath).root, "exports", safeName);
+      const exportDir = join(designPaths(safeWorkspace).root, "exports", safeName);
       const exportPath = join(exportDir, `${safeName}.png`);
       return {
         ok: true,
@@ -990,22 +1016,28 @@ export function registerSystemHandlers(): void {
         exportPath,
       };
     } catch (error: any) {
+      ipcWarn("system:designExportPng", error);
       return { ok: false, error: error?.message || "Bounds error." };
     }
   });
 
   ipcMain.handle("system:designWritePng", (_event, exportPath: string, base64data: string) => {
     try {
-      const dir = exportPath.slice(
+      const safeExportPath = normalizeIpcPath(exportPath, "exportPath");
+      if (!isLikelyBase64(base64data, 100 * 1024 * 1024)) {
+        return { ok: false, error: "Invalid PNG data." };
+      }
+      const dir = safeExportPath.slice(
         0,
-        exportPath.lastIndexOf("\\") !== -1
-          ? exportPath.lastIndexOf("\\")
-          : exportPath.lastIndexOf("/"),
+        safeExportPath.lastIndexOf("\\") !== -1
+          ? safeExportPath.lastIndexOf("\\")
+          : safeExportPath.lastIndexOf("/"),
       );
       if (dir && !existsSync(dir)) mkdirSync(dir, { recursive: true });
-      writeFileSync(exportPath, Buffer.from(base64data, "base64"));
-      return { ok: true, path: exportPath };
+      writeFileSync(safeExportPath, Buffer.from(base64data, "base64"));
+      return { ok: true, path: safeExportPath };
     } catch (error: any) {
+      ipcWarn("system:designWritePng", error);
       return { ok: false, error: error?.message || "Write error." };
     }
   });

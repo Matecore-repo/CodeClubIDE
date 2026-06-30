@@ -93,7 +93,6 @@ export async function* streamChatCompletion(
   await ensureCacheLoaded();
   const cacheKey = JSON.stringify({ messages, model: config.model });
   if (chatCache.has(cacheKey)) {
-    console.log("[Semantic Cache] Yielding cached stream completion");
     const cachedEvents = chatCache.get(cacheKey)!;
     for (const event of cachedEvents) {
       yield event;
@@ -107,7 +106,6 @@ export async function* streamChatCompletion(
   if (tools && tools.length > 0) body.tools = tools;
   if (config.reasoning_effort) body.reasoning_effort = config.reasoning_effort;
 
-  console.log(`[Stream] Starting: ${config.model} @ ${url}`, body);
   const streamId = await window.api.proxyFetchStream(url, {
     method: "POST",
     headers: {
@@ -118,7 +116,6 @@ export async function* streamChatCompletion(
     },
     body: JSON.stringify(body),
   });
-  console.log(`[Stream] ID: ${streamId}`);
 
   const toolCallAccum: Record<number, { id?: string; name?: string; args: string }> = {};
   let usage: UsageInfo | undefined;
@@ -144,7 +141,6 @@ export async function* streamChatCompletion(
       if (!trimmed || !trimmed.startsWith("data: ")) continue;
       const data = trimmed.slice(6);
       if (data === "[DONE]") {
-        console.log(`[Stream] ${streamId} DONE via [DONE] marker`);
         continue;
       }
 
@@ -217,7 +213,6 @@ export async function* streamChatCompletion(
   });
 
   const unDone = window.api.onStreamDone(streamId, () => {
-    console.log(`[Stream] ${streamId} DONE via socket close`);
     isDone = true;
     resolveNext?.();
   });

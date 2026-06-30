@@ -30,7 +30,7 @@ const config: Configuration = {
     perMachine: false,
   },
   linux: {
-    target: ["AppImage", "deb", "rpm"],
+    target: ["AppImage", "deb"],
     category: "Development",
     artifactName: "codeclub-${os}-${arch}.${ext}",
     executableName: "codeclub",
