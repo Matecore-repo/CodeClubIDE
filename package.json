@@ -84,7 +84,8 @@
     "vite-plus": "latest"
   },
   "overrides": {
-    "dompurify": "$dompurify"
+    "dompurify": "$dompurify",
+    "expr-eval": "npm:expr-eval-fork@^3.0.1"
   },
   "devEngines": {
     "packageManager": {
