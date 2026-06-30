@@ -5,6 +5,7 @@ import { appendFileSync, mkdirSync, existsSync } from "fs";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { registerIpcHandlers } from "./ipc";
 import { cleanupTerminals } from "./ipc/terminal";
+import { ipcWarn, normalizeIpcUrl } from "./ipc/validation";
 
 function getLogPath(): string {
   const logsDir = is.dev ? join(__dirname, "../../logs") : join(app.getPath("userData"), "logs");
@@ -68,7 +69,11 @@ function createWindow(): void {
   // });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url);
+    try {
+      shell.openExternal(normalizeIpcUrl(details.url, ["http:", "https:", "mailto:"]));
+    } catch (error) {
+      ipcWarn("window:openExternal", error);
+    }
     return { action: "deny" };
   });
 
