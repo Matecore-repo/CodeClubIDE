@@ -75,7 +75,7 @@
     "@vitejs/plugin-react": "^4.0.0",
     "dotenv": "^17.4.2",
     "electron": "^42.5.1",
-    "electron-builder": "^26.0.0",
+    "electron-builder": "^26.15.3",
     "javascript-obfuscator": "^5.4.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
