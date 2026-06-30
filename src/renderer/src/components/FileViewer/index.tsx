@@ -11,12 +11,22 @@ export function FileViewer({
   onBack,
   workspacePath,
   hasOtherPanels,
+  tabs,
+  activePath,
+  onSelectTab,
+  onCloseTab,
+  isActive = true,
 }: {
   filePath: string;
   activeColor?: string;
   onBack: () => void;
   workspacePath?: string | null;
   hasOtherPanels?: boolean;
+  tabs?: { path: string }[];
+  activePath?: string;
+  onSelectTab?: (path: string) => void;
+  onCloseTab?: (path: string) => void;
+  isActive?: boolean;
 }) {
   const [content, setContent] = useState<string | null>(null);
   const [original, setOriginal] = useState<string | null>(null);
@@ -109,6 +119,7 @@ export function FileViewer({
   }, [filePath, parentDir, fileName]);
 
   useEffect(() => {
+    if (!isActive) return;
     const data = { filePath, content };
     (window as any).__activeFile = data;
     window.dispatchEvent(
@@ -126,7 +137,7 @@ export function FileViewer({
         }),
       );
     };
-  }, [filePath, content]);
+  }, [filePath, content, isActive]);
 
   const dirty = content !== original;
   dirtyRef.current = dirty;
@@ -181,6 +192,10 @@ export function FileViewer({
           _onToggleDiff={() => {}}
           onReset={() => {}}
           activeColor={activeColor}
+          tabs={tabs}
+          activePath={activePath}
+          onSelectTab={onSelectTab}
+          onCloseTab={onCloseTab}
         />
         <div style={s.error}>Error loading file. It may be too large or binary.</div>
       </div>
@@ -200,6 +215,10 @@ export function FileViewer({
         _onToggleDiff={toggleDiff}
         onReset={handleReset}
         activeColor={activeColor}
+        tabs={tabs}
+        activePath={activePath}
+        onSelectTab={onSelectTab}
+        onCloseTab={onCloseTab}
       />
       {diffStatus && (
         <div

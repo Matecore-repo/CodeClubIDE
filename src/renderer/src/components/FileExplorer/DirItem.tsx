@@ -10,6 +10,8 @@ export function DirItem({
   isDirectory,
   depth,
   onFileSelect,
+  onFileDragStart,
+  onFileDragEnd,
   selectedPath,
   onSelect,
   onContextMenu,
@@ -31,6 +33,8 @@ export function DirItem({
   isDirectory: boolean;
   depth: number;
   onFileSelect: (path: string) => void;
+  onFileDragStart?: (path: string) => void;
+  onFileDragEnd?: () => void;
   selectedPath: string | null;
   onSelect: (p: string | null, isDirectory: boolean) => void;
   onContextMenu: (e: React.MouseEvent, entry: DirEntry) => void;
@@ -210,6 +214,7 @@ export function DirItem({
           }}
           onContextMenu={(e) => onContextMenu(e, { name, path, isDirectory })}
           onDragStart={(e) => {
+            if (!isDirectory) onFileDragStart?.(path);
             e.dataTransfer.setData("text/plain", path);
             {
               e.dataTransfer.setData("application/x-codeclub-file", path);
@@ -235,6 +240,7 @@ export function DirItem({
             e.stopPropagation();
           }}
           onDragEnd={() => {
+            if (!isDirectory) onFileDragEnd?.();
             dragImageRef.current?.remove();
             dragImageRef.current = null;
           }}
@@ -278,6 +284,8 @@ export function DirItem({
             isDirectory={child.isDirectory}
             depth={depth + 1}
             onFileSelect={onFileSelect}
+            onFileDragStart={onFileDragStart}
+            onFileDragEnd={onFileDragEnd}
             selectedPath={selectedPath}
             onSelect={onSelect}
             onContextMenu={onContextMenu}

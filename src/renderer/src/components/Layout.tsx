@@ -71,6 +71,8 @@ const styles = {
   },
 };
 
+const MAX_FILE_TABS = 12;
+
 export function Layout({
   children,
   version,
@@ -88,7 +90,9 @@ export function Layout({
   const [activeColor, setActiveColor] = useState("");
   const [showExplorer, setShowExplorer] = useState(true);
   const [explorerMode, setExplorerMode] = useState<"folders" | "studio" | "design">("folders");
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [fileTabs, setFileTabs] = useState<{ path: string }[]>([]);
+  const [activeFilePath, setActiveFilePath] = useState<string | null>(null);
+  const [draggedFilePath, setDraggedFilePath] = useState<string | null>(null);
 
   useEffect(() => {
     if (userSettings?.color && activeColor) {
@@ -102,7 +106,7 @@ export function Layout({
   const layout = useWorkspaceLayout();
   const { setActivePanels, setLayoutMode, setSplitRatio } = layout;
 
-  const _isEditorActive = !!selectedFile;
+  const _isEditorActive = !!activeFilePath;
 
   const handleMainResize = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -112,8 +116,10 @@ export function Layout({
       const ratio = (ev.clientX - rect.left) / rect.width;
 
       if (ratio < 0.2) {
-        if (selectedFile) setSelectedFile(null);
-        else layout.setShowChat(false);
+        if (fileTabs.length) {
+          setFileTabs([]);
+          setActiveFilePath(null);
+        } else layout.setShowChat(false);
         return;
       }
       if (ratio > 0.8) {
@@ -152,7 +158,9 @@ export function Layout({
       } else {
         setActivePath(path || null);
         setActiveColor(path ? color : "");
-        setSelectedFile(null);
+        setFileTabs([]);
+        setActiveFilePath(null);
+        setDraggedFilePath(null);
         setShowExplorer(true);
       }
     },
@@ -194,20 +202,29 @@ export function Layout({
   const handleSwitchWorkspace = useCallback((path: string) => {
     setActivePath(path);
     setActiveColor("");
-    setSelectedFile(null);
+    setFileTabs([]);
+    setActiveFilePath(null);
+    setDraggedFilePath(null);
   }, []);
 
   const openPanel = useCallback(
     (panel: "chat" | "terminal" | "graph" | "file" | "review" | "debug", path?: string) => {
       if (panel === "file" && path) {
-        setSelectedFile(path);
+        setFileTabs((current) => {
+          if (current.some((tab) => tab.path === path)) return current;
+          if (!current.length || !activeFilePath) return [{ path }];
+          if (!current.some((tab) => tab.path === activeFilePath)) return [{ path }];
+          return current.map((tab) => (tab.path === activeFilePath ? { path } : tab));
+        });
+        setActiveFilePath(path);
         setActivePanels(["file"]);
       } else {
-        setSelectedFile(null);
+        setFileTabs([]);
+        setActiveFilePath(null);
         setActivePanels([panel as any]);
       }
     },
-    [setActivePanels],
+    [activeFilePath, setActivePanels],
   );
 
   const handleFileSelect = useCallback(
@@ -217,6 +234,66 @@ export function Layout({
     },
     [explorerMode, openPanel],
   );
+
+  const openDraggedFileAsTab = useCallback(
+    () => {
+      const path = draggedFilePath;
+      if (!path) return;
+      if (explorerMode === "studio") return;
+      setFileTabs((current) => {
+        if (current.some((tab) => tab.path === path)) return current;
+        if (current.length >= MAX_FILE_TABS) return current;
+        return [...current, { path }];
+      });
+      setActiveFilePath((current) => {
+        if (fileTabs.length >= MAX_FILE_TABS && !fileTabs.some((tab) => tab.path === path)) {
+          return current;
+        }
+        return path;
+      });
+      setActivePanels(["file"]);
+    },
+    [draggedFilePath, explorerMode, fileTabs, setActivePanels],
+  );
+
+  const handleFileTabClose = useCallback(
+    (path: string) => {
+      setFileTabs((current) => {
+        const index = current.findIndex((tab) => tab.path === path);
+        const next = current.filter((tab) => tab.path !== path);
+        if (activeFilePath === path) {
+          const fallback = next[index] ?? next[index - 1] ?? null;
+          setActiveFilePath(fallback?.path ?? null);
+          if (!fallback) setActivePanels([]);
+        }
+        return next;
+      });
+    },
+    [activeFilePath, setActivePanels],
+  );
+
+  const handleFileTabSelect = useCallback(
+    (path: string) => {
+      if (fileTabs.some((tab) => tab.path === path)) setActiveFilePath(path);
+    },
+    [fileTabs],
+  );
+
+  useEffect(() => {
+    const handleFileTabHotkeys = (event: KeyboardEvent) => {
+      if (!/^F([1-9]|1[0-2])$/.test(event.key)) return;
+      const index = Number(event.key.slice(1)) - 1;
+      const tab = fileTabs[index];
+      if (!tab) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setActiveFilePath(tab.path);
+      setActivePanels(["file"]);
+    };
+
+    window.addEventListener("keydown", handleFileTabHotkeys, true);
+    return () => window.removeEventListener("keydown", handleFileTabHotkeys, true);
+  }, [fileTabs, setActivePanels]);
 
   const handleExplorerModeChange = useCallback(
     (mode: "folders" | "studio" | "design") => {
@@ -233,7 +310,9 @@ export function Layout({
           });
       }
       if (mode !== "folders") {
-        setSelectedFile(null);
+        setFileTabs([]);
+        setActiveFilePath(null);
+        setDraggedFilePath(null);
         layout.setLayoutMode("single");
         layout.setShowTerminal(false);
         layout.setTerminalBottom(false);
@@ -247,7 +326,8 @@ export function Layout({
   const handleBack = useCallback(() => {
     if (layout.layoutMode !== "single") {
       // In multi-panel mode, back goes to launcher (empty)
-      setSelectedFile(null);
+      setFileTabs([]);
+      setActiveFilePath(null);
       setActivePanels([]);
     } else {
       openPanel("chat");
@@ -348,6 +428,8 @@ export function Layout({
               <FileExplorer
                 rootPath={activePath}
                 onFileSelect={handleFileSelect}
+                onFileDragStart={setDraggedFilePath}
+                onFileDragEnd={() => setDraggedFilePath(null)}
                 mode={explorerMode}
                 onModeChange={handleExplorerModeChange}
                 activeColor={activeColor}
@@ -392,12 +474,17 @@ export function Layout({
                       {Children.map(children, (child) =>
                         isValidElement(child)
                           ? cloneElement(child as React.ReactElement<any>, {
-                              filePath: selectedFile,
+                              filePath: activeFilePath,
+                              fileTabs,
+                              draggedFilePath,
                               onBack: handleBack,
                               splitRatio: layout.splitRatio,
                               handleMainResize: handleMainResize,
                               workspacePath: activePath,
                               onFileSelect: handleFileSelect,
+                              onFileDrop: openDraggedFileAsTab,
+                              onFileTabSelect: handleFileTabSelect,
+                              onFileTabClose: handleFileTabClose,
                               showTerminal: layout.showTerminal,
                               setShowTerminal,
                               showGraph: layout.showGraph,

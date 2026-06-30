@@ -3,6 +3,8 @@ import { type UserSettings } from "../../utils/userSettings";
 
 export interface PanelManagerProps {
   filePath?: string | null;
+  fileTabs?: { path: string }[];
+  draggedFilePath?: string | null;
   showChat: boolean;
   showTerminal: boolean;
   showGraph: boolean;
@@ -14,6 +16,9 @@ export interface PanelManagerProps {
   handleMainResize?: (e: React.MouseEvent) => void;
   onBack?: () => void;
   onFileSelect?: (path: string) => void;
+  onFileDrop?: () => void;
+  onFileTabSelect?: (path: string) => void;
+  onFileTabClose?: (path: string) => void;
   workspacePath?: string | null;
   sandbox: boolean;
   activeColor?: string;

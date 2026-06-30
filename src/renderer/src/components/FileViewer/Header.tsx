@@ -12,6 +12,10 @@ export function Header({
   _onToggleDiff,
   onReset,
   activeColor,
+  tabs,
+  activePath,
+  onSelectTab,
+  onCloseTab,
 }: {
   fileName: string;
   filePath: string;
@@ -23,6 +27,10 @@ export function Header({
   _onToggleDiff: () => void;
   onReset: () => void;
   activeColor?: string;
+  tabs?: { path: string }[];
+  activePath?: string;
+  onSelectTab?: (path: string) => void;
+  onCloseTab?: (path: string) => void;
 }) {
   const [hovered, setHovered] = useState<string | null>(null);
 
@@ -65,8 +73,72 @@ export function Header({
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
       </button>
-      <span style={s.fileName}>{fileName}</span>
-      <span style={s.filePath}>{filePath}</span>
+      {tabs?.length ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            overflowX: "auto",
+            flex: 1,
+            height: 34,
+            minWidth: 0,
+          }}
+        >
+          {tabs.map((tab) => {
+            const normalized = tab.path.replace(/\\/g, "/");
+            const name = normalized.split("/").pop() || normalized;
+            const active = tab.path === activePath;
+            return (
+              <div
+                key={tab.path}
+                onClick={() => onSelectTab?.(tab.path)}
+                title={normalized}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "6px 10px",
+                  border: active ? "1px solid #222" : "1px solid transparent",
+                  borderBottom: active ? "1px solid #111" : "none",
+                  marginBottom: -1,
+                  borderRadius: "4px 4px 0 0",
+                  color: active ? "#fff" : "#888",
+                  cursor: "pointer",
+                  fontSize: 11,
+                  flexShrink: 0,
+                  maxWidth: 180,
+                }}
+              >
+                <span
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {name}
+                </span>
+                <span
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onCloseTab?.(tab.path);
+                  }}
+                  title="Close file"
+                  style={{ opacity: 0.6, cursor: "pointer" }}
+                >
+                  ×
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <>
+          <span style={s.fileName}>{fileName}</span>
+          <span style={s.filePath}>{filePath}</span>
+        </>
+      )}
 
       {/* Debug Button — disabled temporarily */}
       {/* <button

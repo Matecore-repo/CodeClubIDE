@@ -27,6 +27,8 @@ export function PanelManager(props: PanelManagerProps) {
     splitRatio,
     handleMainResize,
     filePath,
+    fileTabs = [],
+    draggedFilePath,
   } = props;
 
   const [terminalHeight, setTerminalHeight] = React.useState(250);
@@ -110,6 +112,11 @@ export function PanelManager(props: PanelManagerProps) {
   });
 
   const { allPanels, visiblePanels } = usePanelDefs({ ...props, ...terminalTabs });
+  const primaryFileIsOpen = React.useCallback(
+    (path: string) => Boolean(path && fileTabs.some((tab) => tab.path === path)),
+    [fileTabs],
+  );
+  const hasOpenFiles = fileTabs.length > 0;
 
   if (studioMode && workspacePath) {
     return (
@@ -214,6 +221,16 @@ export function PanelManager(props: PanelManagerProps) {
   const topContent = (
     <div
       style={{ flex: 1, height: "100%", display: "flex", flexDirection: "row", overflow: "hidden" }}
+      onDragOverCapture={(event) => {
+        if (!draggedFilePath) return;
+        event.preventDefault();
+      }}
+      onDropCapture={(event) => {
+        if (!draggedFilePath) return;
+        event.preventDefault();
+        event.stopPropagation();
+        props.onFileDrop?.();
+      }}
     >
       {/* Keep terminal hidden to preserve PTY */}
       {allPanels.find((p) => p.id === "terminal-panel" && !p.visible) && (
@@ -240,7 +257,7 @@ export function PanelManager(props: PanelManagerProps) {
           const isFileViewer = panel.id === "file-viewer";
           return (
             <React.Fragment key={panel.id}>
-              {!isFileViewer && hasAux && filePath && (
+              {!isFileViewer && hasAux && hasOpenFiles && (
                 <div
                   style={{
                     width: 5,
@@ -296,6 +313,17 @@ export function PanelManager(props: PanelManagerProps) {
               activeColor={activeColor}
               workspacePath={workspacePath}
               hasOtherPanels
+              tabs={[{ path }]}
+              activePath={path}
+              onSelectTab={() => {}}
+              onCloseTab={() => {
+                setSecondaryPanels((current) =>
+                  current.map((value, i) => (i === index ? null : value)),
+                );
+                setSecondaryFiles((current) =>
+                  current.map((value, i) => (i === index ? null : value)),
+                );
+              }}
               onBack={() => {
                 setSecondaryPanels((current) =>
                   current.map((value, i) => (i === index ? null : value)),
@@ -531,12 +559,13 @@ export function PanelManager(props: PanelManagerProps) {
       >
         {cells.map((cell, i) => {
           const empty = i === 0 ? visiblePanels.length === 0 : secondaryPanels[i - 1] === null;
-          const fileIsOpen = (path: string) => path === filePath || secondaryFiles.includes(path);
+          const fileIsOpen = (path: string) => primaryFileIsOpen(path) || secondaryFiles.includes(path);
           return (
             <div
               key={i}
               onDragOver={(event) => {
-                const path = event.dataTransfer.getData("application/x-codeclub-file");
+                const path =
+                  draggedFilePath || event.dataTransfer.getData("application/x-codeclub-file");
                 if (
                   empty &&
                   !fileIsOpen(path) &&
@@ -546,10 +575,11 @@ export function PanelManager(props: PanelManagerProps) {
               }}
               onDrop={(event) => {
                 if (!empty) return;
-                const path = event.dataTransfer.getData("application/x-codeclub-file");
+                const path =
+                  draggedFilePath || event.dataTransfer.getData("application/x-codeclub-file");
                 if (!path || fileIsOpen(path)) return;
                 event.preventDefault();
-                if (i === 0) props.onFileSelect?.(path);
+                if (i === 0) props.onFileDrop?.();
                 else {
                   const index = i - 1;
                   setSecondaryFiles((current) =>

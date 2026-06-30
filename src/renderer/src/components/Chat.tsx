@@ -17,10 +17,15 @@ import { SwarmStatus } from "./SwarmStatus";
 export function Chat({
   config,
   filePath,
+  fileTabs,
+  draggedFilePath,
   workspacePath,
   onConfigure,
   onConfigChange,
   onFileSelect,
+  onFileDrop,
+  onFileTabSelect,
+  onFileTabClose,
   onBack,
   showTerminal: propShowTerminal,
   setShowTerminal: propSetShowTerminal,
@@ -42,10 +47,15 @@ export function Chat({
 }: {
   config: AIConfig | null;
   filePath?: string | null;
+  fileTabs?: { path: string }[];
+  draggedFilePath?: string | null;
   workspacePath?: string | null;
   onConfigure?: () => void;
   onConfigChange?: (c: AIConfig) => void;
   onFileSelect?: (path: string) => void;
+  onFileDrop?: () => void;
+  onFileTabSelect?: (path: string) => void;
+  onFileTabClose?: (path: string) => void;
   onBack?: () => void;
   showTerminal?: boolean;
   setShowTerminal?: (v: boolean) => void;
@@ -416,6 +426,8 @@ export function Chat({
     >
       <PanelManager
         filePath={filePath}
+        fileTabs={fileTabs}
+        draggedFilePath={draggedFilePath}
         showChat={showChat}
         showTerminal={showTerminal}
         showGraph={showGraph}
@@ -425,6 +437,9 @@ export function Chat({
         handleMainResize={handleMainResize}
         onBack={onBack}
         onFileSelect={onFileSelect}
+        onFileDrop={onFileDrop}
+        onFileTabSelect={onFileTabSelect}
+        onFileTabClose={onFileTabClose}
         workspacePath={workspacePath}
         sandbox={sandbox}
         activeColor={activeColor}

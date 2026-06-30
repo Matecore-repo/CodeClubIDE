@@ -8,6 +8,55 @@ import { PlanPanel } from "../PlanPanel";
 import { TerminalPanel, type TerminalTab } from "../TerminalPanel";
 import { type PanelManagerProps } from "./types";
 
+function FileTabsPanel({
+  tabs,
+  activePath,
+  activeColor,
+  onBack,
+  workspacePath,
+  hasOtherPanels,
+  onSelectTab,
+  onCloseTab,
+}: {
+  tabs: { path: string }[];
+  activePath: string;
+  activeColor?: string;
+  onBack: () => void;
+  workspacePath?: string | null;
+  hasOtherPanels: boolean;
+  onSelectTab?: (path: string) => void;
+  onCloseTab?: (path: string) => void;
+}) {
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      {tabs.map((tab) => (
+        <div
+          key={tab.path}
+          style={{
+            display: tab.path === activePath ? "flex" : "none",
+            flex: 1,
+            minHeight: 0,
+            overflow: "hidden",
+          }}
+        >
+          <FileViewer
+            filePath={tab.path}
+            isActive={tab.path === activePath}
+            activeColor={activeColor}
+            onBack={onBack}
+            workspacePath={workspacePath}
+            hasOtherPanels={hasOtherPanels}
+            tabs={tabs}
+            activePath={activePath}
+            onSelectTab={onSelectTab}
+            onCloseTab={onCloseTab}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function usePanelDefs(
   props: PanelManagerProps & {
     tabsMap: Record<string, TerminalTab[]>;
@@ -19,6 +68,7 @@ export function usePanelDefs(
 ) {
   const {
     filePath,
+    fileTabs = [],
     showChat,
     showTerminal,
     showGraph,
@@ -65,19 +115,23 @@ export function usePanelDefs(
   );
 
   const hasOtherPanels =
-    showChat || showGraph || !!debugProgram || showReview || showTerminal || props.showPlan;
+    showChat || showGraph || !!debugProgram || !!showReview || showTerminal || !!props.showPlan;
+  const activeFilePath = filePath ?? fileTabs[0]?.path ?? null;
 
   const allPanels = [
     {
       id: "file-viewer",
-      visible: !!filePath,
-      element: filePath ? (
-        <FileViewer
-          filePath={filePath}
+      visible: fileTabs.length > 0 && !!activeFilePath,
+      element: fileTabs.length > 0 && activeFilePath ? (
+        <FileTabsPanel
+          tabs={fileTabs}
+          activePath={activeFilePath}
           activeColor={activeColor}
           onBack={onBack ?? (() => {})}
           workspacePath={workspacePath}
           hasOtherPanels={hasOtherPanels}
+          onSelectTab={props.onFileTabSelect}
+          onCloseTab={props.onFileTabClose}
         />
       ) : null,
     },
@@ -152,7 +206,7 @@ export function usePanelDefs(
               restoreCheckpoint={restoreCheckpoint}
               endRef={endRef}
               userSettings={userSettings}
-              isSplit={Boolean(filePath || showGraph || debugProgram || showTerminal)}
+              isSplit={Boolean(fileTabs.length || showGraph || debugProgram || showTerminal)}
               showTerminal={showTerminal}
             />
           )}

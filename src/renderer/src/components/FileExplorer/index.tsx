@@ -13,12 +13,16 @@ import { DesignPane } from "./DesignPane";
 export function FileExplorer({
   rootPath,
   onFileSelect,
+  onFileDragStart,
+  onFileDragEnd,
   mode = "folders",
   onModeChange,
   activeColor,
 }: {
   rootPath: string | null;
   onFileSelect?: (path: string) => void;
+  onFileDragStart?: (path: string) => void;
+  onFileDragEnd?: () => void;
   mode?: "folders" | "studio" | "design";
   onModeChange?: (mode: "folders" | "studio" | "design") => void;
   activeColor?: string;
@@ -137,6 +141,8 @@ export function FileExplorer({
               isDirectory={child.isDirectory}
               depth={0}
               onFileSelect={onFileSelect ?? (() => {})}
+              onFileDragStart={onFileDragStart}
+              onFileDragEnd={onFileDragEnd}
               selectedPath={f.selectedPath}
               onSelect={f.handleSelect}
               onContextMenu={f.handleContextMenu}
