@@ -2,6 +2,7 @@
 __pycache__/
 node_modules/
 rust-engine/target/
+resources/bin/codeclub-engine.exe
 src/wasm-renderer/target/
 out/
 dist/

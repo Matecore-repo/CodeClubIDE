@@ -24,7 +24,7 @@
     "cargo:build:release": "node scripts/build-engine.mjs --release",
     "check": "vp check",
     "dev": "node scripts/dev.mjs",
-    "build": "vp build && vp pack && electron scripts/compile-bytenode.mjs && javascript-obfuscator out/renderer/assets --output out/renderer/assets && javascript-obfuscator out/preload --output out/preload && node scripts/add-banner.mjs",
+    "build": "npm run cargo:build:release && vp build && vp pack && electron scripts/compile-bytenode.mjs && javascript-obfuscator out/renderer/assets --output out/renderer/assets && javascript-obfuscator out/preload --output out/preload && node scripts/add-banner.mjs",
     "preview": "vp preview",
     "postinstall": "electron-builder install-app-deps",
     "package": "electron-builder --config electron-builder.config.ts",
