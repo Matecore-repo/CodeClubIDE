@@ -9,6 +9,8 @@ export function ApiSettingsKeysView({ onSave }: { onSave: (c: AIConfig) => void 
   const [providerId, setProviderId] = useState("openrouter");
   const [baseUrl, setBaseUrl] = useState("https://openrouter.ai/api/v1");
   const [apiKey, setApiKey] = useState("");
+  const [customHeadersText, setCustomHeadersText] = useState("{}");
+  const [customBodyText, setCustomBodyText] = useState("{}");
   const [validating, setValidating] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const firstLoad = useRef(true);
@@ -36,23 +38,76 @@ export function ApiSettingsKeysView({ onSave }: { onSave: (c: AIConfig) => void 
     if (p) {
       setBaseUrl(savedKeys[id]?.baseUrl ?? p.baseUrl);
       setApiKey(savedKeys[id]?.apiKey ?? "");
+      setCustomHeadersText("{}");
+      setCustomBodyText("{}");
     }
     setStatus(null);
   };
 
+  const parseJsonObject = (text: string, label: string) => {
+    try {
+      const parsed = JSON.parse(text || "{}");
+      if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
+        return { ok: false as const, error: `${label} must be a JSON object` };
+      }
+      return { ok: true as const, value: parsed as Record<string, unknown> };
+    } catch {
+      return { ok: false as const, error: `${label} is invalid JSON` };
+    }
+  };
+
   const handleValidate = async () => {
-    setValidating(true);
-    setStatus(null);
-    const r = await validateKey({ apiKey: requiresKey ? apiKey : "local", baseUrl });
-    setValidating(false);
-    if (r.ok) {
-      const next = { ...savedKeys, [providerId]: { apiKey, baseUrl } };
+    const cleanBaseUrl = baseUrl.trim().replace(/^["']|["']$/g, "");
+    const customHeaders = parseJsonObject(customHeadersText, "Headers");
+    const customBody = parseJsonObject(customBodyText, "Body");
+    if (providerId === "custom" && !customHeaders.ok) {
+      setStatus({ ok: false, msg: customHeaders.error });
+      return;
+    }
+    if (providerId === "custom" && !customBody.ok) {
+      setStatus({ ok: false, msg: customBody.error });
+      return;
+    }
+    const extra =
+      providerId === "custom"
+        ? {
+            customHeaders: customHeaders.value as Record<string, string>,
+            customBody: customBody.value,
+          }
+        : {};
+
+    if (providerId === "custom") {
+      const next = { ...savedKeys, [providerId]: { apiKey, baseUrl: cleanBaseUrl } };
       setSavedKeys(next);
       window.api.storeSet("ai", "keys", next);
       onSave({
         apiKey,
-        baseUrl,
+        baseUrl: cleanBaseUrl,
+        model: providers.find((p) => p.id === providerId)?.defaultModel ?? "local-model",
+        ...extra,
+      });
+      setStatus({ ok: true, msg: "Saved" });
+      setTimeout(() => setStatus(null), 3000);
+      return;
+    }
+
+    setValidating(true);
+    setStatus(null);
+    const r = await validateKey({
+      apiKey: requiresKey ? apiKey : "local",
+      baseUrl: cleanBaseUrl,
+      ...extra,
+    });
+    setValidating(false);
+    if (r.ok) {
+      const next = { ...savedKeys, [providerId]: { apiKey, baseUrl: cleanBaseUrl } };
+      setSavedKeys(next);
+      window.api.storeSet("ai", "keys", next);
+      onSave({
+        apiKey,
+        baseUrl: cleanBaseUrl,
         model: providers.find((p) => p.id === providerId)?.defaultModel ?? "openai/gpt-4o-mini",
+        ...extra,
       });
       setStatus({ ok: true, msg: "Valid key" });
       setTimeout(() => setStatus(null), 3000);
@@ -114,6 +169,49 @@ export function ApiSettingsKeysView({ onSave }: { onSave: (c: AIConfig) => void 
               <span style={{ fontSize: 11, color: "var(--text-weaker)" }}>Saved</span>
             )}
           </div>
+
+          {providerId === "custom" && (
+            <>
+              <textarea
+                value={customHeadersText}
+                onChange={(e) => setCustomHeadersText(e.target.value)}
+                placeholder='{"Authorization":"Bearer token"}'
+                rows={4}
+                style={{
+                  padding: "6px 9px",
+                  borderRadius: 3,
+                  border: "1px solid #2a2a30",
+                  background: "#151515",
+                  color: "var(--text-strong)",
+                  fontSize: "var(--font-size-small)",
+                  outline: "none",
+                  fontFamily: "var(--font-family-mono)",
+                  width: "100%",
+                  boxSizing: "border-box",
+                  resize: "vertical",
+                }}
+              />
+              <textarea
+                value={customBodyText}
+                onChange={(e) => setCustomBodyText(e.target.value)}
+                placeholder='{"temperature":0.2}'
+                rows={4}
+                style={{
+                  padding: "6px 9px",
+                  borderRadius: 3,
+                  border: "1px solid #2a2a30",
+                  background: "#151515",
+                  color: "var(--text-strong)",
+                  fontSize: "var(--font-size-small)",
+                  outline: "none",
+                  fontFamily: "var(--font-family-mono)",
+                  width: "100%",
+                  boxSizing: "border-box",
+                  resize: "vertical",
+                }}
+              />
+            </>
+          )}
 
           <div>
             {!["ollama", "lmstudio", "custom"].includes(providerId) && (
@@ -191,7 +289,7 @@ export function ApiSettingsKeysView({ onSave }: { onSave: (c: AIConfig) => void 
                 fontWeight: 500,
               }}
             >
-              {validating ? "Testing..." : "Validate & Save"}
+              {providerId === "custom" ? "Save" : validating ? "Testing..." : "Validate & Save"}
             </button>
             {status && (
               <span

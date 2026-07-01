@@ -1,3 +1,27 @@
+export const DESIGN_VERSION = 1 as const;
+
+export const DESIGN_LAYER_TYPES = [
+  "group",
+  "frame",
+  "rectangle",
+  "ellipse",
+  "triangle",
+  "text",
+  "draw",
+] as const;
+
+export type DesignLayerType = (typeof DESIGN_LAYER_TYPES)[number];
+
+export const DESIGN_LAYOUT_MODES = ["none", "horizontal", "vertical"] as const;
+export type DesignLayoutMode = (typeof DESIGN_LAYOUT_MODES)[number];
+
+export const DESIGN_COMPONENT_ROLES = ["component", "instance", "component-set"] as const;
+export type DesignComponentRole = (typeof DESIGN_COMPONENT_ROLES)[number];
+
+export function isDesignLayerType(value: unknown): value is DesignLayerType {
+  return typeof value === "string" && DESIGN_LAYER_TYPES.includes(value as DesignLayerType);
+}
+
 export interface DesignPageSummary {
   id: string;
   name: string;
@@ -6,7 +30,7 @@ export interface DesignPageSummary {
 }
 
 export interface DesignManifest {
-  version: 1;
+  version: typeof DESIGN_VERSION;
   activePageId: string | null;
   pages: DesignPageSummary[];
 }
@@ -74,7 +98,7 @@ export interface DesignEffect {
 export interface DesignLayer {
   id: string;
   name: string;
-  type: "group" | "frame" | "rectangle" | "ellipse" | "triangle" | "text" | "draw";
+  type: DesignLayerType;
   parentId: string | null;
   visible: boolean;
   locked: boolean;
@@ -89,7 +113,7 @@ export interface DesignLayer {
   opacity?: number;
   rotation?: number;
   cornerRadius?: number;
-  layoutMode?: "none" | "horizontal" | "vertical";
+  layoutMode?: DesignLayoutMode;
   layoutGap?: number;
   paddingTop?: number;
   paddingRight?: number;
@@ -103,7 +127,7 @@ export interface DesignLayer {
   maxWidth?: number;
   minHeight?: number;
   maxHeight?: number;
-  componentRole?: "component" | "instance" | "component-set";
+  componentRole?: DesignComponentRole;
   componentId?: string;
   instanceOf?: string;
   variantProperties?: Record<string, string>;
@@ -117,7 +141,7 @@ export interface DesignLayer {
 }
 
 export interface DesignPage {
-  version: 1;
+  version: typeof DESIGN_VERSION;
   id: string;
   name: string;
   layers: DesignLayer[];

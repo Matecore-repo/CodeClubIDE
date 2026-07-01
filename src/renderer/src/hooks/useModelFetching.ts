@@ -36,6 +36,11 @@ export function useModelFetching(config: AIConfig | null) {
   }, [catalog, catalogProviderId]);
 
   useEffect(() => {
+    if (!config?.baseUrl) {
+      setFetchedModels(null);
+      return;
+    }
+
     const pid = providerForBaseUrl(config?.baseUrl ?? "");
     const hardcoded = getHardcodedModels(pid);
     if (hardcoded) {
@@ -51,13 +56,14 @@ export function useModelFetching(config: AIConfig | null) {
       pid !== "opencode-go" &&
       pid !== "opencode-zen" &&
       pid !== "ollama" &&
-      pid !== "lmstudio"
+      pid !== "lmstudio" &&
+      pid !== "custom"
     ) {
       setFetchedModels(null);
       return;
     }
     setFetchedModels(null);
-    fetchModels(config ?? { apiKey: "", baseUrl: "" }).then((models) => {
+    fetchModels(config).then((models) => {
       const filtered = filterProviderModels(pid, models);
       setFetchedModels(filtered.length > 0 ? filtered : null);
     });

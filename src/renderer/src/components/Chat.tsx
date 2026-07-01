@@ -378,7 +378,8 @@ export function Chat({
           config?.apiKey ||
           (config?.baseUrl?.includes("localhost") ||
           config?.baseUrl?.includes("127.0.0.1") ||
-          config?.baseUrl?.includes("opencode.ai")
+          config?.baseUrl?.includes("opencode.ai") ||
+          config?.baseUrl?.includes("ngrok-free.dev")
             ? "public"
             : "")
         }

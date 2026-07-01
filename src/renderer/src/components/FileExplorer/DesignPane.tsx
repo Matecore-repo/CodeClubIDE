@@ -353,6 +353,10 @@ export function DesignPane({
   const manifestRef = useRef(manifest);
   manifestRef.current = manifest;
 
+  useEffect(() => {
+    if (page && manifest) undo.push(structuredClone({ manifest, page }));
+  }, [manifest, page, undo]);
+
   const snap = useCallback(() => {
     const p = pageRef.current;
     const m = manifestRef.current;

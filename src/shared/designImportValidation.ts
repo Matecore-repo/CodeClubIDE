@@ -1,14 +1,5 @@
+import { isDesignLayerType } from "./design";
 import type { DesignEffect, DesignFill, DesignLayer, DesignPage, DesignStroke } from "./design";
-
-const LAYER_TYPES = new Set<DesignLayer["type"]>([
-  "group",
-  "frame",
-  "rectangle",
-  "ellipse",
-  "triangle",
-  "text",
-  "draw",
-]);
 
 export interface DesignImportValidationResult {
   page: DesignPage;
@@ -162,7 +153,7 @@ export function normalizeDesignImportPage(
 
   input.layers.forEach((rawLayer: any, index) => {
     const type = rawLayer?.type;
-    if (!LAYER_TYPES.has(type)) {
+    if (!isDesignLayerType(type)) {
       warnings.push(`Layer ignorado por tipo no soportado: ${type || "unknown"}.`);
       return;
     }

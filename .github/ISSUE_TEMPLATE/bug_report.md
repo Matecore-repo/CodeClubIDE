@@ -12,6 +12,7 @@ Una descripción clara y concisa del error.
 
 **To Reproduce / Para reproducir**
 Steps to reproduce the behavior / Pasos para reproducirlo:
+
 1. Go to '...'
 2. Click on '...'
 3. See error
@@ -25,6 +26,7 @@ If applicable, add screenshots to help explain your problem.
 Si aplica, agregá capturas de pantalla.
 
 **Environment / Entorno**
+
 - OS / SO: [e.g. Windows 11, macOS 14, Ubuntu 22.04]
 - Version / Versión: [e.g. 1.0.0]
 

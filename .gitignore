@@ -6,6 +6,7 @@ src/wasm-renderer/target/
 out/
 dist/
 references/
+plan/
 *.log
 *.env*
 .DS_Store

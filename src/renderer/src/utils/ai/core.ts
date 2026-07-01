@@ -171,6 +171,7 @@ export function providerFromUrl(baseUrl: string): string {
 export async function fetchModels(config: {
   apiKey: string;
   baseUrl: string;
+  customHeaders?: Record<string, string>;
 }): Promise<ModelInfo[]> {
   const p = providerFromUrl(config.baseUrl);
   const apiKey =
@@ -185,6 +186,8 @@ export async function validateKey(config: {
   apiKey: string;
   baseUrl: string;
   model?: string;
+  customHeaders?: Record<string, string>;
+  customBody?: Record<string, unknown>;
 }): Promise<{ ok: boolean; error?: string }> {
   const p = providerFromUrl(config.baseUrl);
   const apiKey =
@@ -202,6 +205,8 @@ export async function* streamCompletion(
     model: string;
     reasoning_effort?: "low" | "medium" | "high";
     toolProtocol?: "json" | "xml";
+    customHeaders?: Record<string, string>;
+    customBody?: Record<string, unknown>;
   },
   tools?: ToolDefinition[],
   signal?: AbortSignal,

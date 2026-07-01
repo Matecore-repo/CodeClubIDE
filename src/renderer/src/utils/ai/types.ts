@@ -4,6 +4,8 @@ export interface AIConfig {
   model: string;
   reasoning_effort?: "low" | "medium" | "high";
   toolProtocol?: "json" | "xml";
+  customHeaders?: Record<string, string>;
+  customBody?: Record<string, unknown>;
 }
 
 export interface ToolDefinition {

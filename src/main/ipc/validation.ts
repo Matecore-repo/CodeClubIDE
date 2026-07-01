@@ -25,7 +25,9 @@ export function normalizeIpcUrl(
   value: unknown,
   protocols: readonly string[] = ["http:", "https:"],
 ): string {
-  const raw = normalizeIpcString(value, "url");
+  const input = normalizeIpcString(value, "url");
+  const markdownLink = input.match(/^\[[^\]]+\]\((https?:\/\/[^)]+)\)$/);
+  const raw = (markdownLink?.[1] ?? input).replace(/^["']|["']$/g, "");
   let parsed: URL;
   try {
     parsed = new URL(raw);

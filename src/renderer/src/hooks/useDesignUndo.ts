@@ -15,6 +15,8 @@ export function useDesignUndo() {
 
   const push = useCallback((snapshot: DesignSnapshot) => {
     if (lockedRef.current) return;
+    const current = stackRef.current[pointerRef.current];
+    if (current && JSON.stringify(current) === JSON.stringify(snapshot)) return;
     stackRef.current = [...stackRef.current.slice(0, pointerRef.current + 1), snapshot];
     if (stackRef.current.length > MAX) stackRef.current = stackRef.current.slice(-MAX);
     pointerRef.current = stackRef.current.length - 1;

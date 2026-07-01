@@ -12,7 +12,12 @@ import {
 import { createHash, randomUUID } from "crypto";
 import { join, resolve } from "path";
 import { hostname, userInfo } from "os";
-import type { DesignManifest, DesignPage } from "../../shared/design";
+import {
+  DESIGN_LAYOUT_MODES,
+  isDesignLayerType,
+  type DesignManifest,
+  type DesignPage,
+} from "../../shared/design";
 import { lintDesignPage } from "../../shared/designLint";
 import { normalizeDesignImportPage } from "../../shared/designImportValidation";
 import { getDesignLayerDescendantIds } from "../../shared/designLayers";
@@ -886,6 +891,7 @@ export function registerSystemHandlers(): void {
         text: "Text",
         draw: "Drawing",
       };
+      if (!isDesignLayerType(shape.type) || shape.type === "group") return null;
       page.layers.push({
         id: randomUUID(),
         name: `${names[shape.type] || "Layer"} ${page.layers.length + 1}`,
@@ -893,10 +899,10 @@ export function registerSystemHandlers(): void {
         parentId: null,
         visible: true,
         locked: false,
-        x: shape.x,
-        y: shape.y,
-        width: shape.width,
-        height: shape.height,
+        x: Number.isFinite(shape.x) ? shape.x : 0,
+        y: Number.isFinite(shape.y) ? shape.y : 0,
+        width: Math.max(1, Number.isFinite(shape.width) ? shape.width : 1),
+        height: Math.max(1, Number.isFinite(shape.height) ? shape.height : 1),
         fill: shape.type === "text" || shape.type === "draw" ? "#f4f4f5" : "#d9d9d9",
         text: shape.type === "text" ? "Text" : undefined,
         points: shape.points,
@@ -931,16 +937,22 @@ export function registerSystemHandlers(): void {
         "paddingBottom",
         "paddingLeft",
       ] as const;
-      const allowedStrings = ["name", "vectorPath", "windingRule", "text", "layoutMode"] as const;
+      const allowedStrings = ["name", "vectorPath", "text"] as const;
       const allowedArrays = ["points", "fills", "strokes", "effects"] as const;
       for (const key of allowedNumbers) {
         const value = (patch as Record<string, unknown>)[key];
-        if (typeof value === "number" && Number.isFinite(value)) layer[key] = value;
+        if (typeof value === "number" && Number.isFinite(value)) {
+          layer[key] = key === "width" || key === "height" ? Math.max(1, value) : value;
+        }
       }
       for (const key of allowedStrings) {
         const value = (patch as Record<string, unknown>)[key];
         if (typeof value === "string") (layer as any)[key] = value;
       }
+      const layoutMode = (patch as Record<string, unknown>).layoutMode;
+      if (DESIGN_LAYOUT_MODES.includes(layoutMode as any)) layer.layoutMode = layoutMode as any;
+      const windingRule = (patch as Record<string, unknown>).windingRule;
+      if (windingRule === "nonzero" || windingRule === "evenodd") layer.windingRule = windingRule;
       for (const key of allowedArrays) {
         const value = (patch as Record<string, unknown>)[key];
         if (Array.isArray(value)) (layer as any)[key] = value;

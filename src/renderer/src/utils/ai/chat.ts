@@ -1,18 +1,28 @@
 import type { Message, StreamEvent, ToolDefinition, UsageInfo, ModelInfo } from "./types";
 
+function requestHeaders(config: {
+  apiKey: string;
+  baseUrl: string;
+  customHeaders?: Record<string, string>;
+}) {
+  return {
+    Authorization: `Bearer ${config.apiKey}`,
+    "HTTP-Referer": "https://opencode.ai/",
+    "X-Title": "codeclub",
+    "X-Source": "opencode",
+    ...(config.baseUrl.includes("ngrok-free.dev") ? { "ngrok-skip-browser-warning": "true" } : {}),
+    ...config.customHeaders,
+  };
+}
+
 export async function fetchModels(
-  config: { apiKey: string; baseUrl: string },
+  config: { apiKey: string; baseUrl: string; customHeaders?: Record<string, string> },
   query?: string,
 ): Promise<ModelInfo[]> {
   const url = `${config.baseUrl.replace(/\/$/, "")}/models${query ?? ""}`;
   try {
     const res = await window.api.proxyFetch(url, {
-      headers: {
-        Authorization: `Bearer ${config.apiKey}`,
-        "HTTP-Referer": "https://opencode.ai/",
-        "X-Title": "codeclub",
-        "X-Source": "opencode",
-      },
+      headers: requestHeaders(config),
     });
     if (!res.ok) return [];
     const json = JSON.parse(res.data);
@@ -29,13 +39,11 @@ export async function validateKey(config: {
   apiKey: string;
   baseUrl: string;
   model?: string;
+  customHeaders?: Record<string, string>;
+  customBody?: Record<string, unknown>;
 }): Promise<{ ok: boolean; error?: string }> {
   const base = config.baseUrl.replace(/\/$/, "");
-  const headers = {
-    Authorization: `Bearer ${config.apiKey}`,
-    "HTTP-Referer": "https://opencode.ai/",
-    "X-Title": "codeclub",
-  };
+  const headers = requestHeaders(config);
 
   // Mandatory: Lightweight chat completion validates key for all providers
   // We no longer rely on /models as it can be public (e.g. OpenRouter)
@@ -44,7 +52,12 @@ export async function validateKey(config: {
     const res = await window.api.proxyFetch(`${base}/chat/completions`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
-      body: JSON.stringify({ model, messages: [{ role: "user", content: "." }], max_tokens: 1 }),
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content: "." }],
+        max_tokens: 1,
+        ...config.customBody,
+      }),
     });
     if (res.ok) return { ok: true };
 
@@ -86,6 +99,8 @@ export async function* streamChatCompletion(
     model: string;
     reasoning_effort?: "low" | "medium" | "high";
     endpoint?: string;
+    customHeaders?: Record<string, string>;
+    customBody?: Record<string, unknown>;
   },
   tools?: ToolDefinition[],
   _signal?: AbortSignal,
@@ -102,17 +117,20 @@ export async function* streamChatCompletion(
 
   const endpoint = config.endpoint ?? "/chat/completions";
   const url = `${config.baseUrl.replace(/\/$/, "")}${endpoint}`;
-  const body: Record<string, unknown> = { model: config.model, messages, stream: true };
+  const body: Record<string, unknown> = {
+    model: config.model,
+    messages,
+    stream: true,
+    ...config.customBody,
+  };
   if (tools && tools.length > 0) body.tools = tools;
   if (config.reasoning_effort) body.reasoning_effort = config.reasoning_effort;
 
   const streamId = await window.api.proxyFetchStream(url, {
     method: "POST",
     headers: {
+      ...requestHeaders(config),
       "Content-Type": "application/json",
-      Authorization: `Bearer ${config.apiKey}`,
-      "HTTP-Referer": "https://opencode.ai/",
-      "X-Title": "codeclub",
     },
     body: JSON.stringify(body),
   });
