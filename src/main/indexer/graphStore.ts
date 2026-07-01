@@ -2,6 +2,8 @@ import { createReadStream, createWriteStream, existsSync, mkdirSync, renameSync 
 import { join } from "path";
 import { createGunzip, createGzip } from "zlib";
 import type { GraphData, GraphEdge, GraphNode } from "../../preload/types";
+import { enrichTopographicNodes } from "../../shared/topographicIdentity";
+import type { TopographicNode } from "../../shared/topographicNodes";
 import type { IndexChunk } from "./types";
 
 function indexDir(workspacePath: string): string {
@@ -81,6 +83,131 @@ export function loadGraphStore(workspacePath: string): GraphData | null {
       .all() as GraphNode[];
     const edges = db.prepare("SELECT source, target FROM graph_edges").all() as GraphEdge[];
     return { nodes, edges };
+  } catch {
+    return null;
+  } finally {
+    db.close();
+  }
+}
+
+export function saveAstStore(workspacePath: string, nodes: TopographicNode[]): boolean {
+  const db = openDatabase(workspacePath);
+  if (!db) return false;
+  const enriched = enrichTopographicNodes(nodes);
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS ast_files (
+        path TEXT PRIMARY KEY,
+        language TEXT NOT NULL,
+        file_hash TEXT NOT NULL,
+        indexed_at INTEGER NOT NULL,
+        scanner_version TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS ast_nodes (
+        id TEXT PRIMARY KEY,
+        stable_key TEXT NOT NULL,
+        parent_id TEXT,
+        path TEXT NOT NULL,
+        type TEXT NOT NULL,
+        name TEXT NOT NULL,
+        language TEXT NOT NULL,
+        qualified_name TEXT,
+        signature TEXT,
+        start_line INTEGER NOT NULL,
+        end_line INTEGER NOT NULL,
+        bytes INTEGER NOT NULL,
+        characters INTEGER NOT NULL,
+        hash TEXT NOT NULL,
+        content_hash TEXT,
+        file_hash TEXT,
+        child_count INTEGER NOT NULL,
+        is_code INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS ast_edges (
+        source_id TEXT NOT NULL,
+        target_id TEXT NOT NULL,
+        kind TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_ast_nodes_path ON ast_nodes(path);
+      CREATE INDEX IF NOT EXISTS idx_ast_nodes_type_name ON ast_nodes(type, name);
+      CREATE INDEX IF NOT EXISTS idx_ast_edges_source ON ast_edges(source_id, kind);
+      DELETE FROM ast_edges;
+      DELETE FROM ast_nodes;
+      DELETE FROM ast_files;
+    `);
+
+    const insertFile = db.prepare(
+      "INSERT INTO ast_files (path, language, file_hash, indexed_at, scanner_version) VALUES (?, ?, ?, ?, ?)",
+    );
+    const insertNode = db.prepare(
+      `INSERT INTO ast_nodes (
+        id, stable_key, parent_id, path, type, name, language, qualified_name, signature,
+        start_line, end_line, bytes, characters, hash, content_hash, file_hash, child_count, is_code
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    const insertEdge = db.prepare(
+      "INSERT INTO ast_edges (source_id, target_id, kind) VALUES (?, ?, ?)",
+    );
+
+    db.exec("BEGIN");
+    const indexedAt = Date.now();
+    for (const node of enriched) {
+      if (node.type === "file") {
+        insertFile.run(node.path, node.language, node.hash, indexedAt, "topographic-v1");
+      }
+      insertNode.run(
+        node.id,
+        node.stableKey ?? node.id,
+        node.parentId ?? null,
+        node.path,
+        node.type,
+        node.name,
+        node.language,
+        node.qualifiedName ?? null,
+        node.signature ?? null,
+        node.startLine,
+        node.endLine,
+        node.bytes,
+        node.characters,
+        node.hash,
+        node.contentHash ?? node.hash,
+        node.fileHash ?? node.hash,
+        node.childCount,
+        node.isCode ? 1 : 0,
+      );
+      if (node.parentId) insertEdge.run(node.parentId, node.id, "CONTAINS");
+    }
+    db.exec("COMMIT");
+    return true;
+  } catch {
+    try {
+      db.exec("ROLLBACK");
+    } catch {}
+    return false;
+  } finally {
+    db.close();
+  }
+}
+
+export function loadAstStore(workspacePath: string): TopographicNode[] | null {
+  if (!existsSync(graphDbPath(workspacePath))) return null;
+  const db = openDatabase(workspacePath);
+  if (!db) return null;
+  try {
+    type StoredAstNodeRow = Omit<TopographicNode, "isCode"> & { isCode: number };
+    const rows = db
+      .prepare(
+        `SELECT
+          id, parent_id AS parentId, name, type, path, language,
+          start_line AS startLine, end_line AS endLine, bytes, characters, hash,
+          child_count AS childCount, is_code AS isCode, stable_key AS stableKey,
+          qualified_name AS qualifiedName, signature, content_hash AS contentHash,
+          file_hash AS fileHash
+        FROM ast_nodes ORDER BY path, start_line, end_line`,
+      )
+      .all() as StoredAstNodeRow[];
+    if (rows.length === 0) return null;
+    return rows.map((row) => ({ ...row, isCode: Boolean(row.isCode) }));
   } catch {
     return null;
   } finally {
@@ -260,6 +387,17 @@ export interface StoredRoute {
   line: number;
 }
 
+export interface GraphStoreStats {
+  graphNodes: number;
+  graphEdges: number;
+  symbols: number;
+  symbolEdges: number;
+  routes: number;
+  astFiles: number;
+  astNodes: number;
+  astEdges: number;
+}
+
 function extractRoutesFromChunk(chunk: IndexChunk): StoredRoute[] {
   const patterns = [
     { kind: "electron-ipc", regex: /ipcMain\.handle\(\s*["'`]([^"'`]+)["'`]/g },
@@ -339,6 +477,45 @@ export function queryRouteStore(
     return db.prepare(sql).all(...params, query.limit ?? 50) as StoredRoute[];
   } catch {
     return null;
+  } finally {
+    db.close();
+  }
+}
+
+function countTable(db: any, table: string): number {
+  try {
+    const row = db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get() as { count: number };
+    return row?.count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function getGraphStoreStats(workspacePath: string): GraphStoreStats {
+  const empty = {
+    graphNodes: 0,
+    graphEdges: 0,
+    symbols: 0,
+    symbolEdges: 0,
+    routes: 0,
+    astFiles: 0,
+    astNodes: 0,
+    astEdges: 0,
+  };
+  if (!existsSync(graphDbPath(workspacePath))) return empty;
+  const db = openDatabase(workspacePath);
+  if (!db) return empty;
+  try {
+    return {
+      graphNodes: countTable(db, "graph_nodes"),
+      graphEdges: countTable(db, "graph_edges"),
+      symbols: countTable(db, "symbols"),
+      symbolEdges: countTable(db, "symbol_edges"),
+      routes: countTable(db, "routes"),
+      astFiles: countTable(db, "ast_files"),
+      astNodes: countTable(db, "ast_nodes"),
+      astEdges: countTable(db, "ast_edges"),
+    };
   } finally {
     db.close();
   }

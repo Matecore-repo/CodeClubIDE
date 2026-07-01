@@ -291,7 +291,18 @@ fn build_tree(workspace: &Path) -> Result<Vec<TopographicNode>, Box<dyn std::err
 
             for section in sections {
                 let section_type = match section.node_type.as_str() {
-                    "function" | "class" | "interface" | "section" | "block" => section.node_type.clone(),
+                    "function"
+                    | "method"
+                    | "class"
+                    | "interface"
+                    | "struct"
+                    | "enum"
+                    | "trait"
+                    | "impl"
+                    | "type"
+                    | "variable"
+                    | "section"
+                    | "block" => section.node_type.clone(),
                     _ => "other".to_string(),
                 };
                 result.push(TopographicNode {

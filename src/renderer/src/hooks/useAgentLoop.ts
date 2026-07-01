@@ -240,62 +240,100 @@ export function useAgentLoop(
             { id: assistantId, role: "assistant", content: "", treeInfo },
           ]);
 
-          let streamTimedOut = false;
-          let idleTimer = window.setTimeout(() => {
-            streamTimedOut = true;
-            abort.abort();
-          }, STREAM_IDLE_TIMEOUT_MS);
-          const resetIdleTimer = () => {
-            window.clearTimeout(idleTimer);
-            idleTimer = window.setTimeout(() => {
-              streamTimedOut = true;
-              abort.abort();
-            }, STREAM_IDLE_TIMEOUT_MS);
+          let streamDone = false;
+          let heartbeatTimer: number | null = null;
+          let heartbeatShown = false;
+          const clearHeartbeat = () => {
+            if (heartbeatTimer != null) window.clearTimeout(heartbeatTimer);
+            heartbeatTimer = null;
           };
+          const scheduleHeartbeat = () => {
+            clearHeartbeat();
+            heartbeatTimer = window.setTimeout(() => {
+              if (streamDone || abort.signal.aborted || fullContent) return;
+              heartbeatShown = true;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId ? { ...m, content: "Still thinking..." } : m,
+                ),
+              );
+              scheduleHeartbeat();
+            }, STREAM_HEARTBEAT_MS);
+          };
+
           try {
-            for await (const event of streamCompletion(
-              agentMessages,
-              config,
-              activeTools,
-              abort.signal,
-            )) {
-              resetIdleTimer();
+            for (let attempt = 0; ; attempt += 1) {
+              fullContent = "";
+              toolCalls.length = 0;
+              streamDone = false;
+              heartbeatShown = false;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId
+                    ? {
+                        ...m,
+                        content: attempt > 0 ? `Reconnecting... attempt ${attempt + 1}` : "",
+                      }
+                    : m,
+                ),
+              );
+              if (attempt > 0) await new Promise((r) => setTimeout(r, STREAM_RETRY_DELAY_MS));
               assertActive(runId);
-              if (event.type === "content") {
-                fullContent += event.text;
-                setMessages((prev) =>
-                  prev.map((m) => (m.id === assistantId ? { ...m, content: fullContent } : m)),
-                );
-              } else if (event.type === "tool_call_done") {
-                toolCalls.push(event.call);
-              } else if (event.type === "done") {
-                const fallbackPrompt = encode(JSON.stringify(agentMessages)).length;
-                const fallbackCompletion = encode(fullContent).length;
-                const usage = event.usage ?? {
-                  prompt_tokens: fallbackPrompt,
-                  completion_tokens: fallbackCompletion,
-                  total_tokens: fallbackPrompt + fallbackCompletion,
-                };
-                usage.active_tools = toolNames.length + toolCalls.length;
-                usage.latency_ms ??= Math.round(performance.now() - startedAt);
-                usage.peak_memory_mb = peakMemoryMb();
-                promptTokens += usage.prompt_tokens;
-                completionTokens += usage.completion_tokens;
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantId ? { ...m, usage, tool_calls: toolCalls, turnSummary } : m,
-                  ),
-                );
-                break;
+              scheduleHeartbeat();
+              for await (const event of streamCompletion(
+                agentMessages,
+                config,
+                activeTools,
+                abort.signal,
+              )) {
+                assertActive(runId);
+                if (event.type === "content") {
+                  fullContent += event.text;
+                  heartbeatShown = false;
+                  setMessages((prev) =>
+                    prev.map((m) => (m.id === assistantId ? { ...m, content: fullContent } : m)),
+                  );
+                } else if (event.type === "tool_call_done") {
+                  toolCalls.push(event.call);
+                } else if (event.type === "done") {
+                  streamDone = true;
+                  const fallbackPrompt = encode(JSON.stringify(agentMessages)).length;
+                  const fallbackCompletion = encode(fullContent).length;
+                  const usage = event.usage ?? {
+                    prompt_tokens: fallbackPrompt,
+                    completion_tokens: fallbackCompletion,
+                    total_tokens: fallbackPrompt + fallbackCompletion,
+                  };
+                  usage.active_tools = toolNames.length + toolCalls.length;
+                  usage.latency_ms ??= Math.round(performance.now() - startedAt);
+                  usage.peak_memory_mb = peakMemoryMb();
+                  promptTokens += usage.prompt_tokens;
+                  completionTokens += usage.completion_tokens;
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantId
+                        ? { ...m, usage, tool_calls: toolCalls, turnSummary }
+                        : m,
+                    ),
+                  );
+                  break;
+                }
               }
+              clearHeartbeat();
+              if (streamDone && !fullContent.trim() && toolCalls.length === 0) {
+                streamDone = false;
+              }
+              if (streamDone || abort.signal.aborted) break;
             }
-          } catch (err) {
-            if (streamTimedOut)
-              throw new Error("Model stream timed out after 45 seconds without activity.");
-            throw err;
           } finally {
-            window.clearTimeout(idleTimer);
+            clearHeartbeat();
           }
+          if (heartbeatShown && !fullContent) {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === assistantId ? { ...m, content: "" } : m)),
+            );
+          }
+          assertActive(runId);
 
           setMessages((prev) =>
             prev.map((message) =>
@@ -508,4 +546,5 @@ export function useAgentLoop(
     setPendingQuestion,
   };
 }
-const STREAM_IDLE_TIMEOUT_MS = 180_000;
+const STREAM_HEARTBEAT_MS = 20_000;
+const STREAM_RETRY_DELAY_MS = 3_000;

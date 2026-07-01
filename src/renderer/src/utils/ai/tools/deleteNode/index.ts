@@ -6,7 +6,7 @@ registerTool({
     type: "function",
     function: {
       name: "delete",
-      description: "Delete a file classically or a topographic file, folder, node, or line range.",
+      description: "Delete a file classically or an AST file, folder, node, or line range.",
       parameters: {
         type: "object",
         properties: {
@@ -76,7 +76,7 @@ registerTool({
         return result.error === "hash-conflict"
           ? `Error: hash-conflict. Re-read the target and retry with baseHash ${result.currentHash}.`
           : `Error: ${result.error}`;
-      return JSON.stringify(result);
+      return JSON.stringify({ mode: "ast", freshness: "fresh", warnings: [], ...result });
     } catch (err) {
       return `Error in delete/${args.subtool}: ${(err as Error).message}`;
     }

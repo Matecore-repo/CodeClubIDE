@@ -4,7 +4,8 @@ import { execFile } from "child_process";
 import { app } from "electron";
 import type { GraphData } from "../../../preload/types";
 import type { TopographicNode } from "../../../shared/topographicNodes";
-import { loadGraphStore, saveGraphStore } from "../../indexer/graphStore";
+import { enrichTopographicNodes } from "../../../shared/topographicIdentity";
+import { loadAstStore, loadGraphStore, saveAstStore, saveGraphStore } from "../../indexer/graphStore";
 import { getScanBinaryPath } from "../../indexer/scanner";
 
 function topoExePath(): string {
@@ -39,8 +40,10 @@ function saveGraph(workspacePath: string, data: GraphData): void {
 }
 
 function saveTopographic(workspacePath: string, data: TopographicNode[]): void {
+  const enriched = enrichTopographicNodes(data);
+  saveAstStore(workspacePath, enriched);
   try {
-    writeFileSync(topoPath(workspacePath), JSON.stringify(data));
+    writeFileSync(topoPath(workspacePath), JSON.stringify(enriched));
   } catch {}
 }
 
@@ -57,10 +60,12 @@ function loadGraph(workspacePath: string): GraphData | null {
 }
 
 function loadTopographic(workspacePath: string): TopographicNode[] | null {
+  const stored = loadAstStore(workspacePath);
+  if (stored) return stored;
   try {
     const p = topoPath(workspacePath);
     if (!existsSync(p)) return null;
-    return JSON.parse(readFileSync(p, "utf-8"));
+    return enrichTopographicNodes(JSON.parse(readFileSync(p, "utf-8")));
   } catch {
     return null;
   }
@@ -109,7 +114,7 @@ function fullScanTopographic(workspacePath: string): Promise<TopographicNode[]> 
           return;
         }
         try {
-          resolve(JSON.parse(stdout) as TopographicNode[]);
+          resolve(enrichTopographicNodes(JSON.parse(stdout) as TopographicNode[]));
         } catch {
           resolve([]);
         }
@@ -136,7 +141,7 @@ function scanSingleFileTopographic(filePath: string): Promise<TopographicNode[]>
         }
         try {
           const parsed = JSON.parse(stdout);
-          resolve(Array.isArray(parsed) ? parsed : []);
+          resolve(Array.isArray(parsed) ? enrichTopographicNodes(parsed) : []);
         } catch {
           resolve([]);
         }
@@ -169,7 +174,21 @@ function resolveImport(filePath: string, importSpec: string): string | null {
   const dir = dirname(filePath);
   let resolved = join(dir, importSpec).replace(/\\/g, "/");
 
-  const extensions = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".css", ".scss", ".json"];
+  const extensions = [
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".mjs",
+    ".cjs",
+    ".css",
+    ".scss",
+    ".json",
+    ".c",
+    ".h",
+    ".cpp",
+    ".hpp",
+  ];
   for (const ext of extensions) {
     const c = resolved + ext;
     if (existsSync(c)) return c.replace(/\\/g, "/");
@@ -206,6 +225,11 @@ function isIndexableExtension(filePath: string): boolean {
     ".md",
     ".yaml",
     ".yml",
+    ".toml",
+    ".c",
+    ".h",
+    ".cpp",
+    ".hpp",
     ".txt",
   ].includes(ext);
 }

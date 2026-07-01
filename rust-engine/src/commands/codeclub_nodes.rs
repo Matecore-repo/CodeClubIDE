@@ -1,6 +1,7 @@
 use serde::Serialize;
 use std::fs;
 use std::path::Path;
+use crate::codegraph::extract_tree_sitter_ranges;
 
 #[derive(Serialize)]
 pub struct StructuralNode {
@@ -109,6 +110,25 @@ pub fn decompose_file_to_sections(file_path: &str, content: &str) -> Vec<Structu
         .unwrap_or("")
         .to_lowercase();
     let mut sections = Vec::new();
+
+    let tree_sitter_sections: Vec<(usize, usize, String, String)> = extract_tree_sitter_ranges(&ext, content)
+        .into_iter()
+        .filter_map(|range| {
+            let name = range.name?;
+            Some((
+                range.start_line.saturating_sub(1),
+                range.end_line.saturating_sub(1),
+                range.kind,
+                name,
+            ))
+        })
+        .collect();
+    for (start, end, kind, name) in tree_sitter_sections {
+        push_section(&mut sections, file_path, name, &kind, start, end, &lines);
+    }
+    if !sections.is_empty() {
+        return sections;
+    }
 
     if matches!(
         ext.as_str(),
@@ -349,7 +369,7 @@ fn stable_hash(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{code_block_end, code_declaration};
+    use super::{code_block_end, code_declaration, decompose_file_to_sections};
 
     #[test]
     fn recognizes_common_code_nodes() {
@@ -371,5 +391,22 @@ mod tests {
     fn ends_a_function_at_its_closing_brace() {
         let lines = ["function greet() {", "  return 'hello'", "}", "globalThis.greet = greet"];
         assert_eq!(code_block_end(&lines, 0), Some(2));
+    }
+
+    #[test]
+    fn uses_tree_sitter_symbols_before_blocks() {
+        let code = r#"
+class Service {
+public:
+  void start();
+};
+
+void Service::start() {}
+"#;
+        let nodes = decompose_file_to_sections("service.cpp", code);
+        let names: Vec<_> = nodes.iter().map(|node| node.name.as_str()).collect();
+        assert!(names.contains(&"Service"));
+        assert!(names.contains(&"start"));
+        assert!(!names.iter().any(|name| name.starts_with("block-")));
     }
 }

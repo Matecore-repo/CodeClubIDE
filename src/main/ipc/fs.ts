@@ -154,9 +154,13 @@ export function registerFsHandlers(): void {
       }
     },
   );
-  ipcMain.handle("fs:topographicRead", (_event, request: TopographicReadRequest) =>
-    readTopographicContent(request.workspacePath, request, readStructuralNodes),
-  );
+  ipcMain.handle("fs:topographicRead", async (_event, request: TopographicReadRequest) => {
+    try {
+      return await readTopographicContent(request.workspacePath, request, readStructuralNodes);
+    } catch (error) {
+      return { error: (error as Error).message };
+    }
+  });
   ipcMain.handle("fs:topographicMutate", async (_event, request: TopographicMutationRequest) => {
     try {
       return await mutateTopographic(request.workspacePath, request.mutation, readStructuralNodes);

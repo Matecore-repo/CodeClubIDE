@@ -20,6 +20,8 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "build:wasm": "cd src/wasm-renderer && wasm-pack build --target web --out-dir pkg",
+    "cargo:build": "node scripts/build-engine.mjs",
+    "cargo:build:release": "node scripts/build-engine.mjs --release",
     "check": "vp check",
     "dev": "node scripts/dev.mjs",
     "build": "vp build && vp pack && electron scripts/compile-bytenode.mjs && javascript-obfuscator out/renderer/assets --output out/renderer/assets && javascript-obfuscator out/preload --output out/preload && node scripts/add-banner.mjs",

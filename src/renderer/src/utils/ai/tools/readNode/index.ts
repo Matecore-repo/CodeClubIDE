@@ -9,8 +9,7 @@ registerTool({
     type: "function",
     function: {
       name: "read",
-      description:
-        "Read files using classic whole-file access or the deterministic topographic tree.",
+      description: "Read files using classic whole-file access or the deterministic AST tree.",
       parameters: {
         type: "object",
         properties: {

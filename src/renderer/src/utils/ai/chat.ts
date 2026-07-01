@@ -259,7 +259,10 @@ export async function* streamChatCompletion(
       if (error) throw new Error(error);
     }
     // Only cache successful standard responses to avoid caching partial/error states
-    if (recordedEvents.some((ev) => ev.type === "done" && ev.finish_reason === "stop")) {
+    if (
+      recordedEvents.some((ev) => ev.type === "content" && ev.text.trim()) &&
+      recordedEvents.some((ev) => ev.type === "done" && ev.finish_reason === "stop")
+    ) {
       chatCache.set(cacheKey, recordedEvents);
       window.api
         .storeSet("cache", "completions", Array.from(chatCache.entries()))

@@ -13,16 +13,29 @@ pub fn extract_tree_sitter_ranges(ext: &str, content: &str) -> Vec<SymbolRange> 
         "c" | "h" => tree_sitter_vendored::language_c(),
         "cc" | "cpp" | "cxx" | "hpp" | "hh" | "hxx" => tree_sitter_vendored::language_cpp(),
         "cs" => tree_sitter_vendored::language_c_sharp(),
+        "dart" => tree_sitter_vendored::language_dart(),
+        "ex" | "exs" => tree_sitter_vendored::language_elixir(),
+        "fs" | "fsx" | "fsi" => tree_sitter_vendored::language_fsharp(),
         "go" => tree_sitter_vendored::language_go(),
         "java" => tree_sitter_vendored::language_java(),
         "js" | "jsx" | "mjs" | "cjs" => tree_sitter_vendored::language_javascript(),
+        "kt" | "kts" => tree_sitter_vendored::language_kotlin(),
+        "lua" => tree_sitter_vendored::language_lua(),
+        "ml" | "mli" => tree_sitter_vendored::language_ocaml(),
+        "pas" | "pp" => tree_sitter_vendored::language_pascal(),
+        "pl" | "pm" => tree_sitter_vendored::language_perl(),
         "ts" | "mts" | "cts" => tree_sitter_vendored::language_typescript(),
         "tsx" => tree_sitter_vendored::language_tsx(),
         "py" | "pyw" => tree_sitter_vendored::language_python(),
+        "r" => tree_sitter_vendored::language_r(),
         "rs" => tree_sitter_vendored::language_rust(),
         "rb" => tree_sitter_vendored::language_ruby(),
         "php" => tree_sitter_vendored::language_php(),
+        "scala" | "sc" => tree_sitter_vendored::language_scala(),
+        "sol" => tree_sitter_vendored::language_solidity(),
         "swift" => tree_sitter_vendored::language_swift(),
+        "vue" => tree_sitter_vendored::language_vue(),
+        "zig" => tree_sitter_vendored::language_zig(),
         "html" | "htm" => tree_sitter_vendored::language_html(),
         "css" => tree_sitter_vendored::language_css(),
         "json" => tree_sitter_vendored::language_json(),
@@ -55,18 +68,26 @@ fn visit(node: Node, bytes: &[u8], out: &mut Vec<SymbolRange>) {
             | "class_specifier"
             | "struct_specifier"
             | "function_declaration"
+            | "function"
+            | "function_item"
+            | "function_statement"
             | "method_definition"
+            | "method_declaration"
+            | "method"
+            | "constructor_declaration"
             | "class_declaration"
             | "class_definition"
             | "interface_declaration"
             | "lexical_declaration"
-            | "function_item"
             | "impl_item"
             | "struct_item"
             | "enum_item"
             | "trait_item"
-            | "method_declaration"
+            | "object_declaration"
             | "type_declaration"
+            | "type_alias_declaration"
+            | "variable_declaration"
+            | "const_declaration"
     ) {
         if let Some(name) = node_name(node, bytes) {
             out.push(SymbolRange {
@@ -95,10 +116,16 @@ fn node_kind(kind: &str) -> &str {
         "enum_item" => "enum",
         "trait_item" => "trait",
         "impl_item" => "impl",
+        "object_declaration" => "class",
         "method_definition" => "method",
         "method_declaration" => "method",
+        "method" => "method",
+        "constructor_declaration" => "method",
         "lexical_declaration" => "variable",
+        "variable_declaration" => "variable",
+        "const_declaration" => "variable",
         "type_declaration" => "type",
+        "type_alias_declaration" => "type",
         _ => "function",
     }
 }
@@ -234,5 +261,18 @@ func BuildIndex() {}
         assert!(names.contains(&"Server"));
         assert!(names.contains(&"Run"));
         assert!(names.contains(&"BuildIndex"));
+    }
+
+    #[test]
+    fn extracts_java_symbols() {
+        let code = r#"
+class Service {
+    void start() {}
+}
+"#;
+        let ranges = extract_tree_sitter_ranges("java", code);
+        let names: Vec<_> = ranges.iter().filter_map(|range| range.name.as_deref()).collect();
+        assert!(names.contains(&"Service"));
+        assert!(names.contains(&"start"));
     }
 }

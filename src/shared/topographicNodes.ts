@@ -3,8 +3,15 @@ export type TopographicNodeType =
   | "folder"
   | "file"
   | "function"
+  | "method"
   | "class"
   | "interface"
+  | "struct"
+  | "enum"
+  | "trait"
+  | "impl"
+  | "type"
+  | "variable"
   | "section"
   | "block"
   | "other";
@@ -23,6 +30,11 @@ export interface TopographicNode {
   hash: string;
   childCount: number;
   isCode: boolean;
+  stableKey?: string;
+  qualifiedName?: string;
+  signature?: string;
+  contentHash?: string;
+  fileHash?: string;
 }
 
 export interface TopographicReadRequest {
@@ -36,7 +48,14 @@ export interface TopographicReadRequest {
 export type TopographicMutation =
   | { action: "create-file"; path: string; content?: string }
   | { action: "create-folder"; path: string }
-  | { action: "insert"; path: string; content: string; startLine?: number; baseHash?: string }
+  | {
+      action: "insert";
+      path: string;
+      content: string;
+      startLine?: number;
+      baseHash?: string;
+      dryRun?: boolean;
+    }
   | {
       action: "replace";
       path: string;
@@ -96,6 +115,9 @@ export type TopographicMutationResult =
       endLine?: number;
       dryRun?: boolean;
       replacedText?: string;
+      proposedContent?: string;
+      action?: string;
+      wouldMutate?: boolean;
     }
   | { ok: false; error: string; currentHash?: string };
 
@@ -103,5 +125,17 @@ export type TopographicDiffResult = {
   id: string;
   name: string;
   path: string;
-  status: "added" | "removed" | "modified" | "moved";
+  status: "added" | "removed" | "modified" | "moved" | "renamed";
+  type?: string;
+  startLine?: number;
+  endLine?: number;
+  keywords?: string[];
+  context?: {
+    before?: string;
+    after?: string;
+    summary?: string;
+  };
+  previousName?: string;
+  previousPath?: string;
+  reason?: string;
 };

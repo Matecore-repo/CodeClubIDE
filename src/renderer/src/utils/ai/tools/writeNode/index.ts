@@ -6,7 +6,7 @@ registerTool({
     type: "function",
     function: {
       name: "write",
-      description: "Write a whole file or create/insert through the topographic tree.",
+      description: "Write a whole file or create/insert through the AST tree.",
       parameters: {
         type: "object",
         properties: {
@@ -59,7 +59,9 @@ registerTool({
             } as const)
           : ({ action, path: args.filePath, content: args.content } as const);
       const result = await window.api.topographicMutate({ workspacePath, mutation });
-      return result.ok ? JSON.stringify(result) : mutationError(result);
+      return result.ok
+        ? JSON.stringify({ mode: "ast", freshness: "fresh", warnings: [], ...result })
+        : mutationError(result);
     } catch (err) {
       return `Error in write/${args.subtool}: ${(err as Error).message}`;
     }

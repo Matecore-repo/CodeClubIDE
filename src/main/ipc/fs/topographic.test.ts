@@ -161,4 +161,31 @@ describe("simple topographic tree", () => {
     expect(readFileSync(file, "utf8")).toContain("return 2");
     expect(result).toMatchObject({ ok: true, startLine: 1, endLine: 3 });
   });
+
+  it("previews insert dryRun without modifying the file", async () => {
+    const { root, file, readNodes } = fixture();
+    const before = readFileSync(file, "utf8");
+    const result = await mutateTopographic(
+      root,
+      {
+        action: "insert",
+        path: file,
+        startLine: 2,
+        content: "  const previewOnly = true",
+        baseHash: semanticNodeHash(before),
+        dryRun: true,
+      },
+      readNodes,
+    );
+
+    expect(readFileSync(file, "utf8")).toBe(before);
+    expect(result).toMatchObject({
+      ok: true,
+      dryRun: true,
+      status: "dry-run-preview",
+      willMutate: false,
+      wouldMutate: true,
+      proposedContent: "  const previewOnly = true",
+    });
+  });
 });

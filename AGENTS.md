@@ -46,5 +46,5 @@ Dual model / modelo dual:
 
 - Run `npm run typecheck` before considering any task complete.
 - POSIX paths required in WSL environments.
-- Use topographic tools (`read/edit/search`) for all file operations.
+- Use AST tools (`read/edit/search`) for all file operations.
 - Local Word2Vec indexer auto-syncs on workspace open.

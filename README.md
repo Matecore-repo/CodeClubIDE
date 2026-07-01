@@ -46,7 +46,7 @@ vp run dev
 
 ## Features / Funcionalidades
 
-- **Semantic Git (Topographic):** AST-based file editing, atomic operations, undo by hash, cross-file node movement.
+- **Semantic Git (AST):** AST-based file editing, atomic operations, undo by hash, cross-file node movement.
 - **AI Agent:** Swarm multi-agent (up to 4 parallel), plan/todo tracking, checkpoints with rollback, persistent memory, RAG snippet library, custom skills.
 - **Built-in Debugger:** DAP support for Python (debugpy) and Rust (CodeLLDB). Breakpoints, launch configs.
 - **Local RAG:** Word2Vec indexer auto-syncs on workspace open. 3D graph visualization.

@@ -1,13 +1,33 @@
 import { registerTool } from "../registry";
 import { workspaceFilePath } from "../workspacePath";
 
+type AstMutation = Record<string, any>;
+
+async function retryDryRunWithFreshHash(
+  workspacePath: string,
+  mutation: AstMutation,
+): Promise<any | null> {
+  const fresh = (await window.api.topographicRead({
+    workspacePath,
+    path: mutation.path,
+    nodeId: mutation.nodeId,
+    startLine: mutation.startLine,
+    endLine: mutation.endLine,
+  })) as any;
+  if (!fresh || fresh.error || !fresh.hash) return null;
+  return window.api.topographicMutate({
+    workspacePath,
+    mutation: { ...mutation, baseHash: fresh.hash } as any,
+  });
+}
+
 registerTool({
   definition: {
     type: "function",
     function: {
       name: "edit",
       description:
-        "Edit text or a topographic node. For rust, nodeName can replace nodeId/hash/ranges; metadata is resolved automatically. If structural editing fails and oldContent is provided, edit falls back safely to classic exact replacement.",
+        "Edit text or an AST node. For rust, nodeName can replace nodeId/hash/ranges; metadata is resolved automatically. If structural editing fails and oldContent is provided, edit falls back safely to classic exact replacement.",
       parameters: {
         type: "object",
         properties: {
@@ -15,10 +35,13 @@ registerTool({
           filePath: { type: "string" },
           oldContent: { type: "string" },
           content: { type: "string" },
-          operation: { type: "string", enum: ["replace", "rename", "move", "move-node", "undo"] },
+          operation: {
+            type: "string",
+            enum: ["replace", "insert", "rename", "move", "move-node", "undo"],
+          },
           destination: { type: "string" },
           nodeId: { type: "string" },
-          nodeName: { type: "string", description: "Topographic node name when its ID is unknown" },
+          nodeName: { type: "string", description: "AST node name when its ID is unknown" },
           startLine: { type: "number" },
           endLine: { type: "number" },
           baseHash: { type: "string" },
@@ -39,7 +62,7 @@ registerTool({
       filePath: string;
       oldContent?: string;
       content?: string;
-      operation?: "replace" | "rename" | "move" | "move-node" | "undo";
+      operation?: "replace" | "insert" | "rename" | "move" | "move-node" | "undo";
       destination?: string;
       nodeId?: string;
       nodeName?: string;
@@ -71,6 +94,8 @@ registerTool({
       if (!workspacePath) return "Error: edit/rust requires workspace.";
       const action = args.operation ?? "replace";
       const destination = args.destination ?? args.content;
+      if (action === "insert" && args.content == null)
+        return "Error: edit/rust insert requires content.";
       if (action !== "replace" && action !== "undo" && !destination)
         return `Error: edit/rust ${action} requires destination or content.`;
 
@@ -86,6 +111,20 @@ registerTool({
           args.startLine ??= matches[0].startLine;
           args.endLine ??= matches[0].endLine;
           args.baseHash ??= matches[0].hash;
+        } else if (matches.length > 1) {
+          return JSON.stringify({
+            ok: false,
+            error: "ambiguous-nodeName",
+            candidates: matches.slice(0, 10).map((node: any) => ({
+              id: node.id,
+              name: node.name,
+              type: node.type,
+              path: node.path,
+              startLine: node.startLine,
+              endLine: node.endLine,
+              hash: node.hash,
+            })),
+          });
         }
       }
 
@@ -100,6 +139,15 @@ registerTool({
           nodeName: args.nodeName,
           startLine: args.startLine,
           endLine: args.endLine,
+          baseHash: args.baseHash,
+          dryRun: args.dryRun,
+        };
+      } else if (action === "insert") {
+        mutation = {
+          action,
+          path: args.filePath,
+          content: args.content ?? "",
+          startLine: args.startLine,
           baseHash: args.baseHash,
           dryRun: args.dryRun,
         };
@@ -134,7 +182,11 @@ registerTool({
         };
       }
 
-      const result = await window.api.topographicMutate({ workspacePath, mutation });
+      let result: any = await window.api.topographicMutate({ workspacePath, mutation });
+      if (args.dryRun && !result.ok && result.error === "hash-conflict") {
+        const retry = await retryDryRunWithFreshHash(workspacePath, mutation);
+        if (retry) result = retry.ok ? { ...retry, freshness: "stale-retried" } : retry;
+      }
       if (!result.ok) {
         if (
           action === "replace" &&
@@ -154,7 +206,12 @@ registerTool({
           ? `Error: hash-conflict. Re-read the target and retry with baseHash ${result.currentHash}.`
           : `Error: ${result.error}`;
       }
-      return JSON.stringify(result);
+      return JSON.stringify({
+        mode: "ast",
+        freshness: result.freshness ?? "fresh",
+        warnings: [],
+        ...result,
+      });
     } catch (err) {
       return `Error in edit/${args.subtool}: ${(err as Error).message}`;
     }
