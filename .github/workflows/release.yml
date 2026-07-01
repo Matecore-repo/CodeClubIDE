@@ -76,3 +76,37 @@ jobs:
         run: npx electron-builder --config electron-builder.config.ts --mac --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Node Dependencies
+        run: npm install
+
+      - name: Fix Vite Worker Issue
+        run: echo "export {}" > node_modules/@open-pencil/core/dist/kiwi/fig/parse/worker.ts
+
+      - name: Build Application
+        run: npm run build
+        env:
+          ELECTRON_DISABLE_SANDBOX: "1"
+
+      - name: Build and Package Windows
+        run: npx electron-builder --config electron-builder.config.ts --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
