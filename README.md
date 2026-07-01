@@ -17,6 +17,17 @@ IDE de IA offline-first. BYOK — conectá tu propia API key. Sin suscripción, 
 
 ---
 
+## Contributors / Colaboradores
+
+We ❤️ contributors! Check our [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
+¡Agradecemos a quienes contribuyen! Revisá [CONTRIBUTING.md](CONTRIBUTING.md) para empezar.
+
+<a href="https://github.com/Matecore-repo/CodeClubIDE/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Matecore-repo/CodeClubIDE" alt="Contributors / Colaboradores" />
+</a>
+
+---
+
 ## Quick Start / Inicio Rápido
 
 ```bash
@@ -103,14 +114,6 @@ Todo el tráfico de IA va directo de tu dispositivo al proveedor. codeclub no pr
 | 6   | You enter the terminal with no history and no past.                   | Entras a la terminal sin historia ni pasado.                                      |
 | 7   | The debugging takes as long as it has to take.                        | El debugging durará lo que tenga que durar.                                       |
 | 8   | First night at Code Club? Open the editor and tame the silicon beast. | ¿Primera noche en el Code Club? Abrís el editor y domás a la bestia de silicio.   |
-
-## Contributors / Colaboradores
-
-Thanks to everyone helping build Code Club IDE. / Gracias a todas las personas que ayudan a construir Code Club IDE.
-
-<a href="https://github.com/Matecore-repo/CodeClubIDE/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Matecore-repo/CodeClubIDE" alt="Contributors / Colaboradores" />
-</a>
 
 ## Licensing / Licencia
 
