@@ -89,6 +89,7 @@ Vector design tool. Layers, shapes, freehand drawing, text, fills, strokes, shad
 
 ```bash
 vp run dev           # Start with HMR
+vp run cargo:build   # Build local Rust engine for development
 vp run build         # Build for production
 vp check             # Format, lint & TypeScript validation
 vp test              # Run tests
